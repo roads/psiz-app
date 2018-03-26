@@ -5,9 +5,9 @@ import pandas as pd
 from hieralb.core import Album
 from psiz.visualize import visualize_embedding_static
 
-DROPBOX_PATH = Path('/Users/bdroads/Dropbox')
-APP_PATH = DROPBOX_PATH / Path('python_projects', 'psych_embed_app', 'birds_12')
-ALBUM_PATH = DROPBOX_PATH / Path('exp-datasets', 'birds-12')
+ALBUM_PATH = Path('/Users/bdroads/Dropbox') / Path('exp-datasets', 'birds-12')
+
+APP_PATH = Path('birds_12')
 
 def main():
     '''
@@ -26,13 +26,13 @@ def main():
     # Clean up labels
     clean_classes = {k: pretty_label(v) for k, v in album.classes.items()}
     
-    visualize_embedding_static(Z_2D, filename='psych_embed_app/test_0.pdf')
-    visualize_embedding_static(Z_2D, class_vec=album_info.class_id_0, filename='psych_embed_app/test_1.pdf')
-    visualize_embedding_static(Z_2D, class_vec=album_info.class_id_0, classes = clean_classes, filename='psych_embed_app/test_2.pdf')
+    visualize_embedding_static(Z_2D, filename='psiz-app/test_0.pdf')
+    visualize_embedding_static(Z_2D, class_vec=album_info.class_id_0, filename='psiz-app/test_1.pdf')
+    visualize_embedding_static(Z_2D, class_vec=album_info.class_id_0, classes = clean_classes, filename='psiz-app/test_2.pdf')
 
-    visualize_embedding_static(Z_3D, filename='psych_embed_app/test_3.pdf')
-    visualize_embedding_static(Z_3D, class_vec=album_info.class_id_0, filename='psych_embed_app/test_4.pdf')
-    visualize_embedding_static(Z_3D, class_vec=album_info.class_id_0, classes = clean_classes, filename='psych_embed_app/test_5.pdf')
+    visualize_embedding_static(Z_3D, filename='psiz-app/test_3.pdf')
+    visualize_embedding_static(Z_3D, class_vec=album_info.class_id_0, filename='psiz-app/test_4.pdf')
+    visualize_embedding_static(Z_3D, class_vec=album_info.class_id_0, classes = clean_classes, filename='psiz-app/test_5.pdf')
     # visualize_embedding_static(Z_3D, class_vec=album_info.class_id_0, classes = clean_classes)
 
 def pretty_label(dirty_str):

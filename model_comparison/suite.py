@@ -8,7 +8,7 @@ from sklearn.model_selection import StratifiedKFold
 import matplotlib.pyplot as plt
 from scipy.stats import sem
 
-from hieralb.core import Album
+# from hieralb.core import Album
 
 from psiz.models import Exponential, HeavyTailed, StudentsT
 from psiz.dimensionality import suggest_dimensionality
@@ -18,13 +18,12 @@ import psiz.utils as ut
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-DROPBOX_PATH = Path('/Users/bdroads/Dropbox')
-# DROPBOX_PATH = Path('C:\Users\Brett\Dropbox\Datasets')
-
 ALBUM_NAME = 'birds-16'
-APP_PATH = DROPBOX_PATH / Path('python_projects', 'psych_embed_app', ALBUM_NAME)
-ALBUM_PATH = DROPBOX_PATH / Path('exp-datasets', ALBUM_NAME)
-CV_PATH = DROPBOX_PATH / Path('python_projects', 'psych_embed_app', 'model_comparison', 'cv_10_fold')
+
+# ALBUM_PATH = Path('C:\Users\Brett\Dropbox') / Path('exp-datasets', ALBUM_NAME)
+# ALBUM_PATH = Path('/Users/bdroads/Dropbox') / Path('exp-datasets', ALBUM_NAME)
+
+CV_PATH = Path('model_comparison', 'cv_10_fold')
 
 def main():
     '''
@@ -32,14 +31,15 @@ def main():
 
     n_fold = 10
 
-    album = Album(ALBUM_PATH)
+    # album = Album(ALBUM_PATH)
+    n_stimuli = np.asscalar(np.loadtxt(Path(ALBUM_NAME, 'n_stimuli.txt'), dtype='int'))
 
     # Import judged displays.
-    displays = pd.read_csv(APP_PATH / Path('judged_displays.txt'), header=None, dtype=np.int32)
+    displays = pd.read_csv(Path(ALBUM_NAME, 'judged_displays.txt'), header=None, dtype=np.int32)
     displays = displays - 1 # subtract 1 for zero indexing
     displays = displays.as_matrix()
     # Import corresponding display info.
-    display_info = pd.read_csv(APP_PATH / Path('display_info.txt'))
+    display_info = pd.read_csv(Path(ALBUM_NAME, 'display_info.txt'))
 
     # Instantiate the balanced k-fold cross-validation object.
     skf = StratifiedKFold(n_splits=n_fold, shuffle=True, random_state=723)
@@ -49,35 +49,35 @@ def main():
     # Exponential family. DONE
     # filepath = CV_PATH / Path(ALBUM_NAME, 'Exponential')
     # freeze_options = {}
-    # loss = embedding_cv(skf, displays, display_info, Exponential, album.n_stimuli, freeze_options)
+    # loss = embedding_cv(skf, displays, display_info, Exponential, n_stimuli, freeze_options)
     # pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
     # Gaussian family.
     # filepath = CV_PATH / Path(ALBUM_NAME, 'Gaussian')
     # freeze_options = dict(rho=2., tau=2., gamma=0.)
-    # loss = embedding_cv(skf, displays, display_info, Exponential, album.n_stimuli, freeze_options)
+    # loss = embedding_cv(skf, displays, display_info, Exponential, n_stimuli, freeze_options)
     # pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
     # Laplacian family.
     # filepath = CV_PATH / Path(ALBUM_NAME, 'Laplacian')
     # freeze_options = dict(rho=2., tau=1., gamma=0.)
-    # loss = embedding_cv(skf, displays, display_info, Exponential, album.n_stimuli, freeze_options)
+    # loss = embedding_cv(skf, displays, display_info, Exponential, n_stimuli, freeze_options)
     # pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
     # Heavy-tailed family. DONE
     # filepath = CV_PATH / Path(ALBUM_NAME, 'HeavyTailed')
     # freeze_options = {}
-    # loss = embedding_cv(skf, displays, display_info, HeavyTailed, album.n_stimuli, freeze_options)
+    # loss = embedding_cv(skf, displays, display_info, HeavyTailed, n_stimuli, freeze_options)
     # pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
-    # Student-t family.
+    # # Student-t family.
     filepath = CV_PATH / Path(ALBUM_NAME, 'StudentsT')
     freeze_options = {}
-    loss = embedding_cv(skf, displays, display_info, StudentsT, album.n_stimuli, freeze_options)
+    loss = embedding_cv(skf, displays, display_info, StudentsT, n_stimuli, freeze_options)
     pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
 def suite_plot(ALBUM_NAME):
-    filename = 'psych_embed_app/model_comparison/model_comparison.pdf'
+    filename = 'model_comparison/model_comparison.pdf'
 
     model_list = ['Exponential', 'HeavyTailed'] # StudentsT, 'Gaussian', 'Laplacian',
     n_model = len(model_list)

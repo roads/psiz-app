@@ -14,9 +14,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # tensorboard --logdir=/tmp/tensorflow_logs/embedding/
 # TODO test with attention weights
 
-DROPBOX_PATH = Path('/Users/bdroads/Dropbox')
-APP_PATH = DROPBOX_PATH / Path('python_projects', 'psych_embed_app', 'birds_12')
-ALBUM_PATH = DROPBOX_PATH / Path('exp-datasets', 'birds-12')
+ALBUM_PATH = Path('/Users/bdroads/Dropbox') / Path('exp-datasets', 'birds-12')
+
+APP_PATH = Path('birds_12')
 
 def main():
     """ MAIN

@@ -79,7 +79,7 @@ def main():
 def suite_plot(ALBUM_NAME):
     filename = 'model_comparison/model_comparison.pdf'
 
-    model_list = ['Exponential', 'HeavyTailed'] # StudentsT, 'Gaussian', 'Laplacian',
+    model_list = ['Exponential', 'HeavyTailed', 'StudentsT'] # 'Gaussian', 'Laplacian',
     n_model = len(model_list)
 
     train_mu = np.empty(n_model)

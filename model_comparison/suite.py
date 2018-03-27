@@ -44,7 +44,7 @@ def main():
     # Instantiate the balanced k-fold cross-validation object.
     skf = StratifiedKFold(n_splits=n_fold, shuffle=True, random_state=723)
 
-    # suite_plot(ALBUM_NAME)
+    suite_plot(ALBUM_NAME)
 
     # Exponential family. DONE
     # filepath = CV_PATH / Path(ALBUM_NAME, 'Exponential')
@@ -70,11 +70,11 @@ def main():
     # loss = embedding_cv(skf, displays, display_info, HeavyTailed, n_stimuli, freeze_options)
     # pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
-    # # Student-t family.
-    filepath = CV_PATH / Path(ALBUM_NAME, 'StudentsT')
-    freeze_options = {}
-    loss = embedding_cv(skf, displays, display_info, StudentsT, n_stimuli, freeze_options)
-    pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
+    # Student-t family. DONE
+    # filepath = CV_PATH / Path(ALBUM_NAME, 'StudentsT')
+    # freeze_options = {}
+    # loss = embedding_cv(skf, displays, display_info, StudentsT, n_stimuli, freeze_options)
+    # pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
 def suite_plot(ALBUM_NAME):
     filename = 'model_comparison/model_comparison.pdf'

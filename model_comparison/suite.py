@@ -18,8 +18,8 @@ import psiz.utils as ut
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-# ALBUM_NAME = 'birds-16'
-ALBUM_NAME = 'rocks_Nosofsky_etal_2016'
+ALBUM_NAME = 'birds-16'
+# ALBUM_NAME = 'rocks_Nosofsky_etal_2016'
 
 # ALBUM_PATH = Path('C:\Users\Brett\Dropbox') / Path('exp-datasets', ALBUM_NAME)
 # ALBUM_PATH = Path('/Users/bdroads/Dropbox') / Path('exp-datasets', ALBUM_NAME)
@@ -46,7 +46,8 @@ def main():
     display_info = pd.read_csv(Path('/home/brett/Projects/psiz-app.git', ALBUM_NAME, 'display_info.txt'))
     n_display = displays.shape[0]
     # TODO group_id
-    display_info['group_id'] = pd.Series(np.zeros((n_display)), index=display_info.index)
+    display_info_group_id = pd.DataFrame({'group_id' : np.zeros((n_display))})
+    display_info = pd.concat([display_info, display_info_group_id], axis=1)
 
     # Instantiate the balanced k-fold cross-validation object.
     skf = StratifiedKFold(n_splits=n_fold, shuffle=True, random_state=723)
@@ -136,7 +137,8 @@ def suite_plot(ALBUM_NAME):
 
 def evaluate_fold(i_fold, split_list, displays, display_info, embedding_constructor, n_stimuli, freeze_options, verbose):
     # Settings.
-    n_restart = 2 #TODO
+    n_restart_dim = 2 #TODO 20
+    n_restart_fit = 2 #TODO
 
     if verbose > 1:
             print('    Fold: ', i_fold)
@@ -148,7 +150,7 @@ def evaluate_fold(i_fold, split_list, displays, display_info, embedding_construc
     n_selected = np.array(display_info.n_selected)
     is_ranked = np.array(display_info.is_ranked)
     # assignment_id = np.array(display_info.assignment_id)
-    group_id = display_info.assignment_id
+    group_id = np.array(display_info.group_id)
     n_group = len(np.unique(group_id))
 
     # Train.
@@ -159,7 +161,7 @@ def evaluate_fold(i_fold, split_list, displays, display_info, embedding_construc
     # Select dimensionality.
     n_dim = suggest_dimensionality(embedding_constructor, n_stimuli, 
     displays_train, n_selected=n_selected_train, is_ranked=is_ranked_train,
-    group_id=group_id_train, n_restart=20, verbose=0)
+    group_id=group_id_train, n_restart=n_restart_dim, verbose=0)
     # Instantiate model.
     embedding_model = embedding_constructor(n_stimuli, n_dim, n_group)
     if len(freeze_options) > 0:
@@ -167,7 +169,7 @@ def evaluate_fold(i_fold, split_list, displays, display_info, embedding_construc
     # Fit model using training data.
     J_train = embedding_model.fit(displays_train, 
     n_selected=n_selected_train, is_ranked=is_ranked_train, 
-    group_id=group_id_train, n_restart=n_restart, verbose=0)
+    group_id=group_id_train, n_restart=n_restart_fit, verbose=0)
     
     # Test.
     displays_test = displays[test_index,:]
@@ -195,9 +197,9 @@ def embedding_cv(skf, displays, display_info, embedding_constructor, n_stimuli, 
     group_id = np.array(display_info.group_id)
 
     # Infer the display type IDs.
-    # PROBLEM: need a function that generates IDs to keep observatiosn together and need IDs for balancing.
+    # NOTE: Not balancing across assignment_ids.
     display_type_id = ut.generate_display_type_id(n_reference, n_selected, 
-    is_ranked, group_id, assignment_id)
+    is_ranked, group_id)
     
     J_train = np.empty((n_fold))
     J_test = np.empty((n_fold))

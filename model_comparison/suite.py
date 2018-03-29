@@ -7,6 +7,8 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 import matplotlib.pyplot as plt
 from scipy.stats import sem
+import multiprocessing
+from functools import partial
 
 # from hieralb.core import Album
 
@@ -18,8 +20,8 @@ import psiz.utils as ut
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-ALBUM_NAME = 'birds-16'
-# ALBUM_NAME = 'rocks_Nosofsky_etal_2016'
+# ALBUM_NAME = 'birds-16'
+ALBUM_NAME = 'rocks_Nosofsky_etal_2016'
 
 # ALBUM_PATH = Path('C:\Users\Brett\Dropbox') / Path('exp-datasets', ALBUM_NAME)
 # ALBUM_PATH = Path('/Users/bdroads/Dropbox') / Path('exp-datasets', ALBUM_NAME)
@@ -193,7 +195,7 @@ def embedding_cv(skf, displays, display_info, embedding_constructor, n_stimuli, 
     n_reference = np.array(display_info.n_reference)
     n_selected = np.array(display_info.n_selected)
     is_ranked = np.array(display_info.is_ranked)
-    assignment_id = np.array(display_info.assignment_id)
+    # assignment_id = np.array(display_info.assignment_id)
     group_id = np.array(display_info.group_id)
 
     # Infer the display type IDs.
@@ -205,9 +207,23 @@ def embedding_cv(skf, displays, display_info, embedding_constructor, n_stimuli, 
     J_test = np.empty((n_fold))
 
     split_list = list(skf.split(displays, display_type_id))
-    # train_index, test_index in skf.split(displays, display_type_id):
-    for i_fold in range(n_fold):
-        (J_train[i_fold], J_test[i_fold]) = evaluate_fold(i_fold, split_list, displays, display_info, embedding_constructor, n_stimuli, freeze_options, verbose)
+    # loaded_fold = lambda i_fold: evaluate_fold(i_fold, split_list, displays, display_info, embedding_constructor, n_stimuli, freeze_options, verbose)
+    loaded_fold = partial(evaluate_fold, split_list=split_list, 
+        displays=displays, display_info=display_info, 
+        embedding_constructor=embedding_constructor, n_stimuli=n_stimuli, 
+        freeze_options=freeze_options, verbose=verbose)
+    
+    fold_list = range(n_fold)
+    # for i_fold in fold_list:
+    #     (J_train[i_fold], J_test[i_fold]) = loaded_func(i_fold)
+    with multiprocessing.Pool() as pool:
+        results = pool.map(loaded_fold, fold_list)
+
+    J_train = []
+    J_test = []
+    for i_fold in fold_list:
+        J_train.append(results[i_fold][0])
+        J_test.append(results[i_fold][1])
 
     return {'train': J_train, 'test': J_test}    
 

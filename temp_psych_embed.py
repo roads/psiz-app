@@ -31,7 +31,7 @@ def main():
     judged_displays = pd.read_csv(APP_PATH / Path('judged_displays.txt'), header=None, dtype=np.int32)
     judged_displays = judged_displays - 1 # subtract 1 for zero indexing
     judged_displays = judged_displays.as_matrix()
-    n_selected=np.array(display_info.n_selected)
+    n_selected = np.array(display_info.n_selected)
 
     obs = Observations(judged_displays, n_selected=n_selected)
 

@@ -1,5 +1,5 @@
-'''
-'''
+"""
+"""
 import pickle
 from pathlib import Path
 import numpy as np
@@ -26,34 +26,17 @@ ALBUM_NAME = 'rocks_Nosofsky_etal_2016'
 CV_PATH = Path('model_comparison', 'cv_10_fold')
 
 def main():
-    '''
-    '''
-
+    """
+    """
+    # Settings
     n_fold = 10
 
-    n_stimuli = np.asscalar(np.loadtxt(Path(ALBUM_NAME, 'n_stimuli.txt'), dtype='int'))
-    # n_stimuli = np.asscalar(np.loadtxt(Path('/home/brett/Projects/psiz-app.git', ALBUM_NAME, 'n_stimuli.txt'), dtype='int'))
-
-    # Import judged displays.
-    displays = pd.read_csv(Path(ALBUM_NAME, 'judged_displays.txt'), header=None, dtype=np.int32)
-    # displays = pd.read_csv(Path('/home/brett/Projects/psiz-app.git', ALBUM_NAME, 'judged_displays.txt'), header=None, dtype=np.int32)
-    displays = displays - 1 # subtract 1 for zero indexing
-    displays = displays.as_matrix()
-    # Import corresponding display info.
-    display_info = pd.read_csv(Path(ALBUM_NAME, 'display_info.txt'))
-    # display_info = pd.read_csv(Path('/home/brett/Projects/psiz-app.git', ALBUM_NAME, 'display_info.txt'))
-    n_obs = displays.shape[0]
-    # TODO group_id
-    display_info_group_id = pd.DataFrame({'group_id' : np.zeros((n_obs))})
-    display_info = pd.concat([display_info, display_info_group_id], axis=1)
-
+    (obs, n_stimuli) = load_obs(ALBUM_NAME)
+    
     # Instantiate the balanced k-fold cross-validation object.
     skf = StratifiedKFold(n_splits=n_fold, shuffle=True, random_state=723)
 
     # suite_plot(ALBUM_NAME)
-
-    #TODO obs
-    obs = Observations(displays, n_selected, is_ranked, group_id)
     
     # Exponential family.
     filepath = CV_PATH / Path(ALBUM_NAME, 'Exponential')
@@ -74,16 +57,16 @@ def main():
     # pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
     # Heavy-tailed family.
-    # filepath = CV_PATH / Path(ALBUM_NAME, 'HeavyTailed')
-    # freeze_options = {}
-    # loss = embedding_cv(skf, obs, HeavyTailed, n_stimuli, freeze_options)
-    # pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
+    filepath = CV_PATH / Path(ALBUM_NAME, 'HeavyTailed')
+    freeze_options = {}
+    loss = embedding_cv(skf, obs, HeavyTailed, n_stimuli, freeze_options)
+    pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
     # Student-t family.
-    # filepath = CV_PATH / Path(ALBUM_NAME, 'StudentsT')
-    # freeze_options = {}
-    # loss = embedding_cv(skf, obs, StudentsT, n_stimuli, freeze_options)
-    # pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
+    filepath = CV_PATH / Path(ALBUM_NAME, 'StudentsT')
+    freeze_options = {}
+    loss = embedding_cv(skf, obs, StudentsT, n_stimuli, freeze_options)
+    pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
 def suite_plot(ALBUM_NAME):
     filename = 'model_comparison/model_comparison.pdf'
@@ -138,11 +121,11 @@ def suite_plot(ALBUM_NAME):
 
 def evaluate_fold(i_fold, split_list, obs, embedding_constructor, n_stimuli, freeze_options, verbose):
     # Settings.
-    n_restart_dim = 2 #TODO 20
-    n_restart_fit = 2 #TODO
+    n_restart_dim = 20
+    n_restart_fit = 40
 
     if verbose > 1:
-            print('    Fold: ', i_fold)
+        print('    Fold: ', i_fold)
 
     (train_index, test_index) = split_list[i_fold]
 
@@ -152,13 +135,13 @@ def evaluate_fold(i_fold, split_list, obs, embedding_constructor, n_stimuli, fre
     obs_train = obs.subset(train_index)    
     # Select dimensionality.
     n_dim = suggest_dimensionality(obs_train, embedding_constructor, n_stimuli,
-    n_restart=n_restart_dim, verbose=0)
+    n_restart=n_restart_dim)
     # Instantiate model.
     embedding_model = embedding_constructor(n_stimuli, n_dim, n_group)
     if len(freeze_options) > 0:
         embedding_model.freeze(**freeze_options)
     # Fit model using training data.
-    J_train = embedding_model.fit(obs_train, n_restart=n_restart_fit, verbose=0)
+    J_train = embedding_model.fit(obs_train, n_restart=n_restart_fit)
     
     # Test.
     obs_test = obs.subset(test_index)
@@ -167,23 +150,16 @@ def evaluate_fold(i_fold, split_list, obs, embedding_constructor, n_stimuli, fre
     return (J_train, J_test)
 
 def embedding_cv(skf, obs, embedding_constructor, n_stimuli, freeze_options):
-    '''
-    '''
+    """
+    """
     # Cross-validation settings.
     verbose = 2
-    n_fold = skf.get_n_splits()    
-
-    # Unpackage observations
-    n_reference = obs.n_reference
-    n_selected = obs.n_selected
-    is_ranked = obs.is_ranked
-    assignment_id = obs.assignment_id
-    group_id = obs.group_id
+    n_fold = skf.get_n_splits()
 
     J_train = np.empty((n_fold))
     J_test = np.empty((n_fold))
 
-    split_list = list(skf.split(displays, obs.configuration_id))
+    split_list = list(skf.split(obs.stimulus_set, obs.configuration_id))
     # loaded_fold = lambda i_fold: evaluate_fold(i_fold, split_list, displays, display_info, embedding_constructor, n_stimuli, freeze_options, verbose)
     loaded_fold = partial(evaluate_fold, split_list=split_list, obs=obs, 
         embedding_constructor=embedding_constructor, n_stimuli=n_stimuli, 
@@ -202,6 +178,22 @@ def embedding_cv(skf, obs, embedding_constructor, n_stimuli, freeze_options):
         J_test.append(results[i_fold][1])
 
     return {'train': J_train, 'test': J_test}    
+
+def load_obs(obspath):
+    """
+    """
+    n_stimuli = np.asscalar(np.loadtxt(Path(obspath, 'n_stimuli.txt'), dtype='int'))
+    
+    # Load observations
+    displays = pd.read_csv(Path(obspath, 'judged_displays.txt'), header=None, dtype=np.int32)
+    displays = displays.as_matrix()
+    display_info = pd.read_csv(Path(obspath, 'display_info.txt'))
+    
+    # Create observation object.
+    n_selected = np.array(display_info.n_selected)
+    obs = Observations(displays, n_selected)
+
+    return (obs, n_stimuli)
 
 if __name__ == "__main__":
     main()

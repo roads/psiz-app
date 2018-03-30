@@ -146,14 +146,10 @@ def evaluate_fold(i_fold, split_list, obs, embedding_constructor, n_stimuli, fre
 
     (train_index, test_index) = split_list[i_fold]
 
-    # Unpackage observations
-    n_selected = obs.n_selected
-    is_ranked = obs.is_ranked
-    group_id = obs.group_id
-    n_group = len(np.unique(group_id))
+    n_group = len(np.unique(obs.group_id))
 
     # Train.
-    obs_train = obs.subset(train_index)
+    obs_train = obs.subset(train_index)    
     # Select dimensionality.
     n_dim = suggest_dimensionality(obs_train, embedding_constructor, n_stimuli,
     n_restart=n_restart_dim, verbose=0)
@@ -162,15 +158,10 @@ def evaluate_fold(i_fold, split_list, obs, embedding_constructor, n_stimuli, fre
     if len(freeze_options) > 0:
         embedding_model.freeze(**freeze_options)
     # Fit model using training data.
-    obs_train = Observations(displays_train, n_selected_train, is_ranked_train, group_id_train) #TODO promote
     J_train = embedding_model.fit(obs_train, n_restart=n_restart_fit, verbose=0)
     
     # Test.
-    displays_test = displays[test_index,:]
-    n_selected_test = n_selected[test_index]
-    is_ranked_test = is_ranked[test_index]
-    group_id_test = group_id[test_index]
-    obs_test = Observations(displays_test, n_selected_test, is_ranked_test, group_id_test) #TODO promote
+    obs_test = obs.subset(test_index)
     J_test = embedding_model.evaluate(obs_test)
 
     return (J_train, J_test)

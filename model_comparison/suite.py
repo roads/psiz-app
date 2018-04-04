@@ -39,10 +39,10 @@ def main():
     # suite_plot(ALBUM_NAME)
     
     # Exponential family.
-    filepath = CV_PATH / Path(ALBUM_NAME, 'Exponential')
-    freeze_options = {}
-    loss = embedding_cv(skf, obs, Exponential, n_stimuli, freeze_options)
-    pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
+    # filepath = CV_PATH / Path(ALBUM_NAME, 'Exponential')
+    # freeze_options = {}
+    # loss = embedding_cv(skf, obs, Exponential, n_stimuli, freeze_options)
+    # pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
     # Gaussian family.
     # filepath = CV_PATH / Path(ALBUM_NAME, 'Gaussian')
@@ -57,10 +57,10 @@ def main():
     # pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
     # Heavy-tailed family.
-    filepath = CV_PATH / Path(ALBUM_NAME, 'HeavyTailed')
-    freeze_options = {}
-    loss = embedding_cv(skf, obs, HeavyTailed, n_stimuli, freeze_options)
-    pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
+    # filepath = CV_PATH / Path(ALBUM_NAME, 'HeavyTailed')
+    # freeze_options = {}
+    # loss = embedding_cv(skf, obs, HeavyTailed, n_stimuli, freeze_options)
+    # pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
     # Student-t family.
     filepath = CV_PATH / Path(ALBUM_NAME, 'StudentsT')

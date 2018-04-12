@@ -1,9 +1,16 @@
+"""
+Todo:
+    - resave judged_displays without NaNs    
+
+"""
+
 import numpy as np
 import tensorflow as tf
 from pathlib import Path
 import pandas as pd
 
-from psiz.models import Observations, Exponential, HeavyTailed, StudentsT
+from psiz.trials import JudgedTrials
+from psiz.models import Exponential, HeavyTailed, StudentsT
 from psiz.dimensionality import suggest_dimensionality
 
 # Disables tensorflow warning, doesn't enable AVX/FMA
@@ -13,8 +20,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # tensorboard --logdir=/tmp/tensorflow_logs/embedding/
 # TODO test with attention weights
 
+APP_PATH = Path('rocks_Nosofsky_etal_2016')
 # APP_PATH = Path('birds-12')
-APP_PATH = Path('/home', 'brett', 'Projects', 'psiz-app.git', 'birds-12')
+# APP_PATH = Path('/home', 'brett', 'Projects', 'psiz-app.git', 'birds-12')
 
 def main():
     """ MAIN
@@ -33,7 +41,7 @@ def main():
     judged_displays = judged_displays.as_matrix()
     n_selected = np.array(display_info.n_selected)
 
-    obs = Observations(judged_displays, n_selected=n_selected)
+    obs = JudgedTrials(judged_displays, n_selected=n_selected)
 
     unique_id_list = np.unique(judged_displays)
     unique_id_list_less = unique_id_list[unique_id_list >= 0]
@@ -49,8 +57,13 @@ def main():
     # embedding_model = HeavyTailed(n_stimuli, dimensionality, n_group)
     # embedding_model = StudentsT(n_stimuli, dimensionality, n_group)
     # embedding_model.set_log(do_log=True, delete_prev=True)
+    # print('rho', embedding_model.sim_params['rho'])
+    # freeze_options = dict(rho=2.1, tau=1.1, gamma=0.01)
+    # embedding_model.freeze(freeze_options)
+    # embedding_model.freeze()
+    # print('rho', embedding_model.sim_params['rho'])
     loss = embedding_model.fit(obs, n_restart=4, verbose=1)
-
+    # print('rho', embedding_model.sim_params['rho'])
     # embedding_model.reuse(True, .05)
     # loss = embedding_model.fit(obs, n_restart=2, verbose=1)
 

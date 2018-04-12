@@ -10,9 +10,8 @@ from scipy.stats import sem
 import multiprocessing
 from functools import partial
 
-# from hieralb.core import Album
-
-from psiz.models import Observations, Exponential, HeavyTailed, StudentsT
+from psiz.trials import JudgedTrials
+from psiz.models import Exponential, HeavyTailed, StudentsT
 from psiz.dimensionality import suggest_dimensionality
 import psiz.utils as ut
 
@@ -191,7 +190,7 @@ def load_obs(obspath):
     
     # Create observation object.
     n_selected = np.array(display_info.n_selected)
-    obs = Observations(displays, n_selected)
+    obs = JudgedTrials(displays, n_selected)
 
     return (obs, n_stimuli)
 

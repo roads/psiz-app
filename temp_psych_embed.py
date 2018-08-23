@@ -1,6 +1,6 @@
 """
 Todo:
-    - resave judged_displays without NaNs    
+    - resave judged_displays without NaNs  
 
 """
 
@@ -9,7 +9,7 @@ import tensorflow as tf
 from pathlib import Path
 import pandas as pd
 
-from psiz.trials import JudgedTrials
+from psiz.trials import Observations
 from psiz.models import Exponential, HeavyTailed, StudentsT
 from psiz.dimensionality import suggest_dimensionality
 
@@ -22,7 +22,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 APP_PATH = Path('rocks_Nosofsky_etal_2016')
 # APP_PATH = Path('birds-12')
-# APP_PATH = Path('/home', 'brett', 'Projects', 'psiz-app.git', 'birds-12')
+# APP_PATH = Path('/home', 'brett', 'Projects', 'psiz-app.git', 'rocks_Nosofsky_etal_2016')
+# APP_PATH = Path('/Users', 'bdroads', 'Projects', 'psiz-app.git', 'rocks_Nosofsky_etal_2016')
 
 def main():
     """ MAIN
@@ -39,9 +40,9 @@ def main():
     judged_displays = pd.read_csv(APP_PATH / Path('judged_displays.txt'), header=None, dtype=np.int32)
     judged_displays = judged_displays - 1 # subtract 1 for zero indexing
     judged_displays = judged_displays.as_matrix()
-    n_selected = np.array(display_info.n_selected)
+    n_select = np.array(display_info.n_select)
 
-    obs = JudgedTrials(judged_displays, n_selected=n_selected)
+    obs = Observations(judged_displays, n_select=n_select)
 
     unique_id_list = np.unique(judged_displays)
     unique_id_list_less = unique_id_list[unique_id_list >= 0]
@@ -59,11 +60,12 @@ def main():
     # embedding_model.set_log(do_log=True, delete_prev=True)
     # print('rho', embedding_model.sim_params['rho'])
     # freeze_options = dict(rho=2.1, tau=1.1, gamma=0.01)
+    # freeze_options = dict(rho=2.1)
     # embedding_model.freeze(freeze_options)
     # embedding_model.freeze()
     # print('rho', embedding_model.sim_params['rho'])
     loss = embedding_model.fit(obs, n_restart=4, verbose=1)
-    # print('rho', embedding_model.sim_params['rho'])
+    print('rho', embedding_model.theta['rho']['value'])
     # embedding_model.reuse(True, .05)
     # loss = embedding_model.fit(obs, n_restart=2, verbose=1)
 

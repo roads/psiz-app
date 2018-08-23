@@ -17,7 +17,7 @@ def main():
 
     album_info = pd.read_csv(APP_PATH / Path('album_info.txt'))
     embedding = pd.read_csv(APP_PATH / Path('embedding.txt'), sep=' ', names=('id','dim0','dim1','dim2'))
-    
+
     Z = embedding.as_matrix()
     Z_2D = Z[:,0:2]
     Z_3D = Z[:,0:3]
@@ -25,7 +25,7 @@ def main():
 
     # Clean up labels
     clean_classes = {k: pretty_label(v) for k, v in album.classes.items()}
-    
+
     visualize_embedding_static(Z_2D, filename='psiz-app/test_0.pdf')
     visualize_embedding_static(Z_2D, class_vec=album_info.class_id_0, filename='psiz-app/test_1.pdf')
     visualize_embedding_static(Z_2D, class_vec=album_info.class_id_0, classes = clean_classes, filename='psiz-app/test_2.pdf')

@@ -1,4 +1,4 @@
-assignment_id,code_version,n_reference,n_selected,is_ranked,response_time_s
+assignment_id,code_version,n_reference,n_select,is_ranked,response_time_s
 38,lesions-0,8,2,1,7.004
 38,lesions-0,8,2,1,19.988
 38,lesions-0,8,2,1,54.6

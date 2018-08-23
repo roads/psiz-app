@@ -1,4 +1,4 @@
-assignment_id,code_version,n_reference,n_selected,is_ranked,response_time_s
+assignment_id,code_version,n_reference,n_select,is_ranked,response_time_s
 7,birds-1,8,2,1,63.128
 7,birds-1,8,2,1,14.939
 7,birds-1,8,2,1,17.103

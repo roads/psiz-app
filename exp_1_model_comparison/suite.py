@@ -1,77 +1,81 @@
-"""
-"""
-import pickle
-from pathlib import Path
-import numpy as np
-import pandas as pd
-from sklearn.model_selection import StratifiedKFold
-import matplotlib.pyplot as plt
-from scipy.stats import sem
+"""Suite for running Experiment 1: Model Comparison."""
+
+import os
 import multiprocessing
 from functools import partial
 
-from psiz.trials import Observations
+import numpy as np
+from scipy.stats import sem
+import pandas as pd
+from sklearn.model_selection import StratifiedKFold
+import pickle
+from pathlib import Path
+import matplotlib.pyplot as plt
+
+from psiz.trials import Observations, load_trials
 from psiz.models import Exponential, HeavyTailed, StudentsT
 from psiz.dimensionality import suggest_dimensionality
 import psiz.utils as ut
 
 # Disables tensorflow warning, doesn't enable AVX/FMA
-import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-# ALBUM_NAME = 'birds-16'
-ALBUM_NAME = 'rocks_Nosofsky_etal_2016'
-
-CV_PATH = Path('model_comparison', 'cv_10_fold')
+APP_PATH = Path('/Users', 'bdroads', 'Projects', 'psiz-app')
+CV_PATH = Path('cv_10_fold')
 
 
 def main():
     """
     """
+    album_name = 'birds-16'
+    # album_name = 'rocks_Nosofsky_etal_2016'
+    dataset_path = Path('datasets', album_name, 'obs.hdf5')
+
     # Settings
     n_fold = 10
-
-    (obs, n_stimuli) = load_obs(ALBUM_NAME)
+    obs_filepath = APP_PATH / dataset_path
+    (obs, n_stimuli) = load_obs(obs_filepath)
 
     # Instantiate the balanced k-fold cross-validation object.
     skf = StratifiedKFold(n_splits=n_fold, shuffle=True, random_state=723)
 
-    suite_plot(ALBUM_NAME)
+    # filename = 'model_comparison/model_comparison.pdf'
+    filename = None
+    suite_plot(album_name, filename=filename)
 
     # Exponential family.
-    # filepath = CV_PATH / Path(ALBUM_NAME, 'Exponential')
+    # filepath = CV_PATH / Path(album_name, 'Exponential')
     # freeze_options = {}
+    # # freeze_options = dict(rho=2., beta=10.)
     # loss = embedding_cv(skf, obs, Exponential, n_stimuli, freeze_options)
     # pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
     # Gaussian family.
-    # filepath = CV_PATH / Path(ALBUM_NAME, 'Gaussian')
+    # filepath = CV_PATH / Path(album_name, 'Gaussian')
     # freeze_options = dict(rho=2., tau=2., gamma=0.)
     # loss = embedding_cv(skf, obs, Exponential, n_stimuli, freeze_options)
     # pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
     # Laplacian family.
-    # filepath = CV_PATH / Path(ALBUM_NAME, 'Laplacian')
+    # filepath = CV_PATH / Path(album_name, 'Laplacian')
     # freeze_options = dict(rho=2., tau=1., gamma=0.)
     # loss = embedding_cv(skf, obs, Exponential, n_stimuli, freeze_options)
     # pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
     # Heavy-tailed family.
-    # filepath = CV_PATH / Path(ALBUM_NAME, 'HeavyTailed')
+    # filepath = CV_PATH / Path(album_name, 'HeavyTailed')
     # freeze_options = {}
     # loss = embedding_cv(skf, obs, HeavyTailed, n_stimuli, freeze_options)
     # pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
     # Student-t family.
-    # filepath = CV_PATH / Path(ALBUM_NAME, 'StudentsT')
+    # filepath = CV_PATH / Path(album_name, 'StudentsT')
     # freeze_options = {}
     # loss = embedding_cv(skf, obs, StudentsT, n_stimuli, freeze_options)
     # pickle.dump(loss, open(str(filepath / Path("loss.p")), "wb"))
 
 
-def suite_plot(ALBUM_NAME):
-    filename = 'model_comparison/model_comparison.pdf'
-
+def suite_plot(album_name, filename=None):
     # 'Gaussian', 'Laplacian',
     model_list = ['Exponential', 'HeavyTailed', 'StudentsT'] 
     n_model = len(model_list)
@@ -81,7 +85,7 @@ def suite_plot(ALBUM_NAME):
     test_mu = np.empty(n_model)
     test_se = np.empty(n_model)
     for i_model, model_name in enumerate(model_list):
-        filepath = CV_PATH / Path(ALBUM_NAME, model_name)
+        filepath = CV_PATH / Path(album_name, model_name)
         loss = pickle.load(open(str(filepath / Path("loss.p")), "rb"))
 
         train_mu[i_model] = np.mean(loss['train'])
@@ -187,22 +191,11 @@ def embedding_cv(skf, obs, embedding_constructor, n_stimuli, freeze_options):
     return {'train': J_train, 'test': J_test}
 
 
-def load_obs(obspath):
-    """
-    """
-    n_stimuli = np.asscalar(
-        np.loadtxt(Path(obspath, 'n_stimuli.txt'), dtype='int'))
-
-    # Load observations
-    displays = pd.read_csv(
-        Path(obspath, 'judged_displays.txt'), header=None, dtype=np.int32)
-    displays = displays.as_matrix()
-    display_info = pd.read_csv(Path(obspath, 'display_info.txt'))
-
-    # Create observation object.
-    n_select = np.array(display_info.n_select)
-    obs = Observations(displays, n_select)
-
+def load_obs(obs_filepath):
+    """Return loaded observations."""
+    obs = load_trials(obs_filepath)
+    unique_id_list = np.unique(obs.stimulus_set)
+    n_stimuli = np.sum(np.greater(unique_id_list, -1))
     return (obs, n_stimuli)
 
 

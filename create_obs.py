@@ -1,13 +1,10 @@
 """Script to create Observation objects from text files."""
 
 import numpy as np
-import tensorflow as tf
 from pathlib import Path
 import pandas as pd
 from psiz.trials import Observations
 
-# APP_PATH = Path('rocks_Nosofsky_etal_2016')
-# APP_PATH = Path('datasets', 'birds-12')
 APP_PATH = Path('/Users', 'bdroads', 'Projects', 'psiz-app', 'datasets')
 dataset = Path('birds-12')
 # dataset = Path('birds-16')

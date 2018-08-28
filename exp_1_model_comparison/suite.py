@@ -34,7 +34,7 @@ def main():
     # Settings
     n_fold = 10
     obs_filepath = APP_PATH / dataset_path
-    (obs, n_stimuli) = load_obs(obs_filepath)
+    (obs, n_stimuli) = load_dataset(obs_filepath)
 
     # Instantiate the balanced k-fold cross-validation object.
     skf = StratifiedKFold(n_splits=n_fold, shuffle=True, random_state=723)

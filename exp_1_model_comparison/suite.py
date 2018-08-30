@@ -1,4 +1,7 @@
-"""Suite for running Experiment 1: Model Comparison."""
+"""Experiment 1:  Model Comparison.
+
+Description: TODO
+"""
 
 import os
 import multiprocessing

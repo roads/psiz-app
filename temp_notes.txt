@@ -1,0 +1,33 @@
+Possible sources:
+2D vs 3D                                    Yes (matters a bit)
+float32 vs float64                          No
+normalize loss by number of trials          No
+bug in _select
+having trouble finding exact values
+
+
+3D, exact except z, 15000, float32
+Round 0 | R^2 0.91
+
+2D, exact except z, 15000, float32
+Round 0 | R^2 0.95
+Round 0 | R^2 0.94
+Round 0 | R^2 0.95
+
+2D, 5000, float32
+Round 0 | R^2 0.85
+Round 0 | R^2 0.80
+Round 0 | R^2 0.84
+
+2D, 5000, unnormalized by n_trial, float32
+Round 0 | R^2 0.85
+Round 0 | R^2 0.85
+Round 0 | R^2 0.83
+
+2D, 5000, unnormalized by n_trial, float64
+Round 0 | R^2 0.84
+Round 0 | R^2 0.87
+Round 0 | R^2 0.83
+
+2D, 30000, unnormalized by n_trial, float64
+Round 0 | R^2 0.97

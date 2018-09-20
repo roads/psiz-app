@@ -13,6 +13,7 @@ Notes:
 
 """
 
+import os
 import copy
 import itertools
 
@@ -26,19 +27,22 @@ from psiz.dimensionality import suggest_dimensionality
 from psiz.simulate import Agent
 from psiz.generator import RandomGenerator
 from psiz import datasets
+from psiz import visualize
 from psiz.utils import similarity_matrix, matrix_correlation
 
 
-def main():
+def experiment_2(results_path):
     """Run experiment 2."""
     # Settings.
-    n_run = 3
-    emb_filepath = '/Users/bdroads/Projects/psiz-app/exp_2_configuration_comparison/emb_true.hdf5'
-    data_2c1_rand_filepath = '/Users/bdroads/Projects/psiz-app/exp_2_configuration_comparison/data_2c1_rand.p'
-    data_8c2_rand_filepath = '/Users/bdroads/Projects/psiz-app/exp_2_configuration_comparison/data_8c2_rand.p'
-    figure_path = '/Users/bdroads/Projects/psiz-app/exp_2_configuration_comparison/results.pdf'
-
     dataset_name = 'birds-16'
+    # seed_list = [913, 192, 785, 891, 841]
+    seed_list = [913]
+
+    emb_filepath = os.path.join(results_path, 'emb_true_3d.hdf5')
+    data_2c1_rand_filepath = os.path.join(results_path, 'data_2c1_rand.p')
+    data_8c2_rand_filepath = os.path.join(results_path, 'data_8c2_rand.p')
+    figure_path = os.path.join(results_path, 'exp2.pdf')
+
     (obs, catalog) = datasets.load_dataset(dataset_name)
     time_s_2c1 = 3.06  # TODO compute from obs
     time_s_8c2 = 8.98  # TODO compute from obs
@@ -48,37 +52,46 @@ def main():
         'n_reference': 2,
         'n_select': 1,
         'n_trial_initial': 500,
-        'n_trial_total': 80500,  # 50500
-        'n_trial_per_round': 80000,  # 10000,
+        'n_trial_total': 150500,
+        'n_trial_per_round': 5000,
         'time_s_per_trial': time_s_2c1
     }
     cond_info_8c2 = {
         'name': 'Random 8-choose-2',
         'n_reference': 8,
         'n_select': 2,
-        'n_trial_initial': 250,
-        'n_trial_total': 25250,
-        'n_trial_per_round': 5000,
+        'n_trial_initial':  250,
+        'n_trial_total': 15250,
+        'n_trial_per_round': 500,
         'time_s_per_trial': time_s_8c2
     }
-    freeze_options = {'theta': {'rho': 2}}
+    freeze_options = {'theta': {'rho': 2, 'beta': 10}}
 
     # Infer a ground truth embedding from real observations.
+    # np.random.seed(123)
     # emb_true = real_embedding(obs, catalog, freeze_options)
     # emb_true.save(emb_filepath)
 
     emb_true = load_embedding(emb_filepath)
-    data_2c1_rand = multiple_runs_random(
-        n_run, emb_true, cond_info_2c1, freeze_options)
-    pickle.dump(data_2c1_rand, open(data_2c1_rand_filepath, 'wb'))
+    # visualize.visualize_embedding_static(
+    #     emb_true.z['value'], class_vec=catalog.stimuli.class_id.values,
+    #     classes=catalog.class_label, filename=figure_path)  # TODO
 
-    # data_8c2_rand = multiple_runs_random(
-    #     n_run, emb_true, cond_info_8c2, freeze_options)
-    # pickle.dump(data_8c2_rand, open(data_8c2_rand_filepath, 'wb'))
-
+    # data_2c1_rand = None
     # data_2c1_rand = pickle.load(open(data_2c1_rand_filepath, 'rb'))
+    # data_2c1_rand = multiple_runs_random(
+    #     seed_list, emb_true, cond_info_2c1, freeze_options, data_2c1_rand)
+    # pickle.dump(data_2c1_rand, open(data_2c1_rand_filepath, 'wb'))
+
+    data_8c2_rand = None
     # data_8c2_rand = pickle.load(open(data_8c2_rand_filepath, 'rb'))
-    # plot_results((data_2c1_rand, data_8c2_rand), figure_path)
+    data_8c2_rand = multiple_runs_random(
+        seed_list, emb_true, cond_info_8c2, freeze_options, data_8c2_rand)
+    pickle.dump(data_8c2_rand, open(data_8c2_rand_filepath, 'wb'))
+
+    data_2c1_rand = pickle.load(open(data_2c1_rand_filepath, 'rb'))
+    data_8c2_rand = pickle.load(open(data_8c2_rand_filepath, 'rb'))
+    plot_exp2((data_2c1_rand, data_8c2_rand), figure_path)
 
 
 def real_embedding(obs, catalog, freeze_options):
@@ -90,14 +103,25 @@ def real_embedding(obs, catalog, freeze_options):
     # Determine embedding using all available observation data.
     emb_true = Exponential(catalog.n_stimuli, n_dim)
     emb_true.freeze(freeze_options)
-    emb_true.fit(obs, n_restart=40, verbose=2)
+    emb_true.fit(obs, n_restart=40, verbose=3)
     return emb_true
 
 
-def multiple_runs_random(n_run, emb_true, cond_info, freeze_options):
-    """Perform multiple runs of simulation."""
-    results = None
-    for _ in range(n_run):
+def multiple_runs_random(
+        seed_list, emb_true, cond_info, freeze_options, data_rand=None):
+    """Perform multiple runs of simulation.
+
+    Note: Random number generator is seeded before the beginning of
+        each run.
+    """
+    if data_rand is not None:
+        results = data_rand['results']
+    else:
+        results = None
+
+    n_run = len(seed_list)
+    for i_seed in range(n_run):
+        np.random.seed(seed_list[i_seed])
         results = concat_runs(
             results,
             simulate_random_condition(emb_true, cond_info, freeze_options)
@@ -107,7 +131,7 @@ def multiple_runs_random(n_run, emb_true, cond_info, freeze_options):
 
 
 def simulate_random_condition(emb_true, cond_info, freeze_options):
-    """Simulate progress for a particular trial configuration.
+    """Simulate random selection progress for a trial configuration.
 
     Record:
         n_trial, loss, R^2
@@ -137,19 +161,26 @@ def simulate_random_condition(emb_true, cond_info, freeze_options):
     n_round = len(n_trial)
     r_squared = np.empty((n_round))
     loss = np.empty((n_round))
+
     for i_round in range(n_round):
-        # Infer embedding.
+        # Initialize embedding.
         emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
         emb_inferred.freeze(freeze_options)
+        # emb_inferred.set_log(True, delete_prev=True)  # TODO
+        # Infer embedding with cold restarts.
         include_idx = np.arange(0, n_trial[i_round])
         loss[i_round] = emb_inferred.fit(
-            obs.subset(include_idx), n_restart=20)
+            obs.subset(include_idx), n_restart=20, init_mode='cold', verbose=0)
         # Compare the inferred model with ground truth by comparing the
         # similarity matrices implied by each model.
         simmat_infer = similarity_matrix(
             emb_inferred.similarity, emb_inferred.z['value'])
         r_squared[i_round] = matrix_correlation(simmat_infer, simmat_true)
-        print('Round {0} | R^2 {1:.2f}'.format(i_round, r_squared[i_round]))
+        print(
+            'Round {0} ({1} trials) | Loss: {2:.2f} | R^2: {3:.2f}'.format(
+                i_round, n_trial[i_round], loss[i_round], r_squared[i_round]
+            )
+        )
 
     results = {
         'n_trial': np.expand_dims(n_trial, axis=1),
@@ -171,7 +202,7 @@ def concat_runs(results, results_new):
     return results
 
 
-def plot_results(results, figure_path):
+def plot_exp2(results, figure_path):
     """Visualize results of experiment."""
     fontdict = {
         'fontsize': 10,
@@ -199,14 +230,14 @@ def plot_results(results, figure_path):
 
     # Compute statistics across runs for each condition (on the fly).
     for i_cond, condition in enumerate(results):
-        name = results[condition]['info']['name']
+        name = condition['info']['name']
         time_cost_hr = (
-            results[condition]['info']['time_s_per_trial'] *
-            np.mean(results[condition]['results']['n_trial'], axis=1) /
+            condition['info']['time_s_per_trial'] *
+            np.mean(condition['results']['n_trial'], axis=1) /
             3600
         )
-        # loss = np.mean(results[condition]['loss'], axis=1)
-        r_squared = results[condition]['results']['r_squared']
+        # loss = np.mean(condition['loss'], axis=1)
+        r_squared = condition['results']['r_squared']
         r_squared_mean = np.mean(r_squared, axis=1)
         r_squared_sem = sem(r_squared, axis=1)
 
@@ -247,4 +278,5 @@ def plot_results(results, figure_path):
 
 
 if __name__ == "__main__":
-    main()
+    results_path = '/Users/bdroads/Projects/psiz-app/results'
+    experiment_2(results_path)

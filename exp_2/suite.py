@@ -1,21 +1,13 @@
-"""Experiment 2: Trial configuration comparison.
+"""Experiment 2: Compare trial configurations and selection policies.
 
-Comparing different trial configurations using simulations.
-
-An initial embedding is inferred using real observations data. This
-embedding is then treated as ground truth for the purpose of simulating
-human behavior for two different display configurations.
-
-Notes:
-    For simiplicity, the dimensionality is not inferred at each step.
-        Instead, the correct dimensionality is provided.
-    Perform multiple runs.
-
+Since this experiment is computationally intensive, intermediate
+results are saved to disk and loaded as needed.
 """
 
 import os
 import copy
 import itertools
+from pathlib import Path
 
 import numpy as np
 from scipy.stats import sem
@@ -25,30 +17,73 @@ import pickle
 from psiz.models import Exponential, load_embedding
 from psiz.dimensionality import suggest_dimensionality
 from psiz.simulate import Agent
-from psiz.generator import RandomGenerator
+from psiz.generator import RandomGenerator, ActiveGenerator
+from psiz import trials
 from psiz import datasets
 from psiz import visualize
 from psiz.utils import similarity_matrix, matrix_correlation
 
 
 def experiment_2(results_path):
-    """Run experiment 2."""
+    """Run Experiment 2."""
+    """Experiment 2a: Trial configuration comparison.
+
+    Comparing different trial configurations using simulations.
+
+    An initial embedding is inferred using real observations data. This
+    embedding is then treated as ground truth for the purpose of
+    simulating human behavior for two different display configurations.
+
+    Notes:
+        For simiplicity, the dimensionality is not inferred at each
+            step. Instead, the correct dimensionality is assume to be
+            known.
+        Result files are saved after each run. New results are
+            appeneded to existing results if the respective file already
+            exists.
+
+    """
+    """Experiment 2b:  Selection comparison for one group.
+
+    Comparing random versus active selection for one group using
+    simulations. An initial embedding is inferred using real
+    observations data. This embedding is then treated as ground truth
+    for the purpose of simulating human behavior for two selection
+    policies: random and active.
+
+    Notes:
+        For simiplicity, the dimensionality is not inferred at each
+            step. Instead, the correct dimensionality is assume to be
+            known.
+        Result files are saved after each run. New results are
+            appeneded to existing results if the respective file already
+            exists.
+
+    """
+    # TODO rerun 2 choose 1
     # Settings.
+    freeze_options = {'theta': {'rho': 2, 'beta': 10}}
     dataset_name = 'birds-16'
-    # seed_list = [913, 192, 785, 891, 841]
-    seed_list = [913]
+    seed_list = [913, 192, 785, 891, 841]
 
-    emb_filepath = os.path.join(results_path, 'emb_true_3d.hdf5')
-    data_2c1_rand_filepath = os.path.join(results_path, 'data_2c1_rand.p')
-    data_8c2_rand_filepath = os.path.join(results_path, 'data_8c2_rand.p')
-    figure_path = os.path.join(results_path, 'exp2.pdf')
+    # Filepaths.
+    fp_emb_true = results_path / Path('emb_true_3d.hdf5')
+    fp_data_r2c1 = results_path / Path('data_r2c1.p')
+    fp_data_r8c2 = results_path / Path('data_r8c2.p')
+    fp_data_a8c2 = results_path / Path('data_a8c2.p')
+    fp_figure_embedding = results_path / Path('emb.pdf')
+    fp_figure_exp2a = results_path / Path('exp2a.pdf')
+    fp_figure_exp2b = results_path / Path('exp2b.pdf')
 
+    # Load a set of real observations.
     (obs, catalog) = datasets.load_dataset(dataset_name)
     time_s_2c1 = 3.06  # TODO compute from obs
     time_s_8c2 = 8.98  # TODO compute from obs
 
-    cond_info_2c1 = {
+    # Define experiment conditions.
+    cond_info_r2c1 = {
         'name': 'Random 2-choose-1',
+        'selection_policy': 'random',
         'n_reference': 2,
         'n_select': 1,
         'n_trial_initial': 500,
@@ -56,8 +91,9 @@ def experiment_2(results_path):
         'n_trial_per_round': 5000,
         'time_s_per_trial': time_s_2c1
     }
-    cond_info_8c2 = {
+    cond_info_r8c2 = {
         'name': 'Random 8-choose-2',
+        'selection_policy': 'random',
         'n_reference': 8,
         'n_select': 2,
         'n_trial_initial':  250,
@@ -65,91 +101,129 @@ def experiment_2(results_path):
         'n_trial_per_round': 500,
         'time_s_per_trial': time_s_8c2
     }
-    freeze_options = {'theta': {'rho': 2, 'beta': 10}}
+    cond_info_a8c2 = {
+        'name': 'Active 8-choose-2',
+        'selection_policy': 'active',
+        'n_reference': 8,
+        'n_select': 2,
+        'n_trial_initial':  250,
+        'n_trial_total': 15250,
+        'n_trial_per_round': 50,
+        'time_s_per_trial': time_s_8c2,
+        'n_query': 25,
+    }
 
-    # Infer a ground truth embedding from real observations.
-    # np.random.seed(123)
-    # emb_true = real_embedding(obs, catalog, freeze_options)
-    # emb_true.save(emb_filepath)
+    # Experiment 2 setup: Infer a ground-truth embedding from real
+    # observations.
+    # experiment_2_setup(obs, catalog, freeze_options, fp_emb_true) TODO
 
-    emb_true = load_embedding(emb_filepath)
+    emb_true = load_embedding(fp_emb_true)
+    # Visualize ground-truth embedding. TODO
     # visualize.visualize_embedding_static(
     #     emb_true.z['value'], class_vec=catalog.stimuli.class_id.values,
-    #     classes=catalog.class_label, filename=figure_path)  # TODO
+    #     classes=catalog.class_label, filename=fp_figure_embedding)
 
-    # data_2c1_rand = None
-    # data_2c1_rand = pickle.load(open(data_2c1_rand_filepath, 'rb'))
-    # data_2c1_rand = multiple_runs_random(
-    #     seed_list, emb_true, cond_info_2c1, freeze_options, data_2c1_rand)
-    # pickle.dump(data_2c1_rand, open(data_2c1_rand_filepath, 'wb'))
+    # TODO
+    # simulate_multiple_runs(
+    #     seed_list, emb_true, cond_info_r2c1, freeze_options, fp_data_r2c1)
 
-    data_8c2_rand = None
-    # data_8c2_rand = pickle.load(open(data_8c2_rand_filepath, 'rb'))
-    data_8c2_rand = multiple_runs_random(
-        seed_list, emb_true, cond_info_8c2, freeze_options, data_8c2_rand)
-    pickle.dump(data_8c2_rand, open(data_8c2_rand_filepath, 'wb'))
+    # simulate_multiple_runs(
+    #     seed_list, emb_true, cond_info_r8c2, freeze_options, fp_data_r8c2)
 
-    data_2c1_rand = pickle.load(open(data_2c1_rand_filepath, 'rb'))
-    data_8c2_rand = pickle.load(open(data_8c2_rand_filepath, 'rb'))
-    plot_exp2((data_2c1_rand, data_8c2_rand), figure_path)
+    simulate_multiple_runs(
+        seed_list, emb_true, cond_info_a8c2, freeze_options, fp_data_a8c2)
+
+    # Visualize Experiment 2 results.
+    # data_2c1_rand = pickle.load(open(fp_data_r2c1, 'rb'))
+    # data_8c2_rand = pickle.load(open(fp_data_r8c2, 'rb'))
+    # plot_exp2((data_2c1_rand, data_8c2_rand), fp_figure_exp2a)
 
 
-def real_embedding(obs, catalog, freeze_options):
+def experiment_2_setup(obs, catalog, freeze_options, fp_emb_true):
     """Fit embedding model to real observations."""
+    np.random.seed(123)
+
     # Determine dimensionality.
     n_dim = suggest_dimensionality(
         obs, Exponential, catalog.n_stimuli, freeze_options=freeze_options,
         verbose=1)
+
     # Determine embedding using all available observation data.
     emb_true = Exponential(catalog.n_stimuli, n_dim)
     emb_true.freeze(freeze_options)
     emb_true.fit(obs, n_restart=40, verbose=3)
-    return emb_true
+    emb_true.save(fp_emb_true)
 
 
-def multiple_runs_random(
-        seed_list, emb_true, cond_info, freeze_options, data_rand=None):
+def simulate_multiple_runs(
+        seed_list, emb_true, cond_info, freeze_options, fp_data):
     """Perform multiple runs of simulation.
 
-    Note: Random number generator is seeded before the beginning of
-        each run.
+    The random number generator is re-seeded before each run. Data is
+    saved after each run.
     """
-    if data_rand is not None:
-        results = data_rand['results']
+    if fp_data.is_file():
+        data = pickle.load(open(fp_data, 'rb'))
+        results = data['results']
     else:
+        data = None
         results = None
 
     n_run = len(seed_list)
     for i_seed in range(n_run):
         np.random.seed(seed_list[i_seed])
-        results = concat_runs(
-            results,
-            simulate_random_condition(emb_true, cond_info, freeze_options)
+        results_run = simulate_run(emb_true, cond_info, freeze_options)
+        results = concat_runs(results, results_run)
+        data = {'info': cond_info, 'results': results}
+        pickle.dump(data, open(fp_data, 'wb'))
+
+
+def concat_runs(results, results_new):
+    """Concatenate information from different runs."""
+    if results is None:
+        results = results_new
+    else:
+        for key in results:
+            results[key] = np.concatenate(
+                (results[key], results_new[key]), axis=1
+            )
+    return results
+
+
+def simulate_run(emb_true, cond_info, freeze_options):
+    """Simulate a single run."""
+    if cond_info['selection_policy'] is 'random':
+        results_run = simulate_run_random(
+            emb_true, cond_info, freeze_options)
+    elif cond_info['selection_policy'] is 'active':
+        results_run = simulate_run_active(
+            emb_true, cond_info, freeze_options)
+    else:
+        raise ValueError(
+            'The `selection_policy` must be either "random" or "active".'
         )
-    data_rand = {'info': cond_info, 'results': results}
-    return data_rand
+    return results_run
 
 
-def simulate_random_condition(emb_true, cond_info, freeze_options):
+def simulate_run_random(emb_true, cond_info, freeze_options):
     """Simulate random selection progress for a trial configuration.
 
     Record:
         n_trial, loss, R^2
     """
+    # Define agent based on true embedding.
+    agent = Agent(emb_true)
+
     # Similarity matrix associated with true embedding.
     simmat_true = similarity_matrix(
         emb_true.similarity, emb_true.z['value'])
 
     # Generate a random docket of trials.
-    generator = RandomGenerator(emb_true.n_stimuli)
-    docket = generator.generate(
-        cond_info['n_trial_total'],
-        cond_info['n_reference'],
-        cond_info['n_select']
-    )
-
+    rand_gen = RandomGenerator(
+        cond_info['n_reference'], cond_info['n_select'])
+    docket = rand_gen.generate(
+        cond_info['n_trial_total'], emb_true.n_stimuli)
     # Simulate similarity judgments.
-    agent = Agent(emb_true)
     obs = agent.simulate(docket)
 
     # Infer independent models with increasing amounts of data.
@@ -166,7 +240,6 @@ def simulate_random_condition(emb_true, cond_info, freeze_options):
         # Initialize embedding.
         emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
         emb_inferred.freeze(freeze_options)
-        # emb_inferred.set_log(True, delete_prev=True)  # TODO
         # Infer embedding with cold restarts.
         include_idx = np.arange(0, n_trial[i_round])
         loss[i_round] = emb_inferred.fit(
@@ -190,19 +263,82 @@ def simulate_random_condition(emb_true, cond_info, freeze_options):
     return results
 
 
-def concat_runs(results, results_new):
-    """Concatenate information from different runs."""
-    if results is None:
-        results = results_new
-    else:
-        for key in results:
-            results[key] = np.concatenate(
-                (results[key], results_new[key]), axis=1
+def simulate_run_active(emb_true, cond_info, freeze_options):
+    """Simulate active selection progress for a trial configuration.
+
+    Record:
+        n_trial, loss, R^2
+    """
+    # Define agent based on true embedding.
+    agent = Agent(emb_true)
+
+    # Similarity matrix associated with true embedding.
+    simmat_true = similarity_matrix(
+        emb_true.similarity, emb_true.z['value'])
+
+    # Pre-allocate metrics.
+    n_trial = np.arange(
+        cond_info['n_trial_initial'],
+        cond_info['n_trial_total'] + 1,
+        cond_info['n_trial_per_round']
+    )
+    n_round = len(n_trial)
+    r_squared = np.empty((n_round))
+    loss = np.empty((n_round))
+
+    # The first round is seed using a randomly generated docket.
+    i_round = 0
+    rand_gen = RandomGenerator(
+        cond_info['n_reference'], cond_info['n_select'])
+    rand_docket = rand_gen.generate(
+        cond_info['n_trial_initial'], emb_true.n_stimuli)
+    # Simulate similarity judgments.
+    obs = agent.simulate(rand_docket)
+    # Infer initial model.
+    emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
+    emb_inferred.freeze(freeze_options)
+    loss[i_round] = emb_inferred.fit(
+        obs, n_restart=20, init_mode='cold', verbose=0)
+
+    active_gen = ActiveGenerator()
+    # Infer independent models with increasing amounts of data.
+    for i_round in np.arange(1, n_round + 1):
+        # Select trials based on expected IG.
+        samples = emb_inferred.posterior_samples(obs, n_sample=1000, n_burn=10)
+        active_docket, _ = active_gen.generate(
+            cond_info['n_trial_per_round'], emb_inferred, samples,
+            n_query=cond_info['n_query'])
+
+        # Simulate observations.
+        new_obs = agent.simulate(active_docket)
+        obs = trials.stack([obs, new_obs])
+
+        # Initialize embedding.
+        emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
+        emb_inferred.freeze(freeze_options)
+        # Infer embedding with cold restarts.
+        loss[i_round] = emb_inferred.fit(
+            obs, n_restart=20, init_mode='cold', verbose=0)
+        # Compare the inferred model with ground truth by comparing the
+        # similarity matrices implied by each model.
+        simmat_infer = similarity_matrix(
+            emb_inferred.similarity, emb_inferred.z['value'])
+        r_squared[i_round] = matrix_correlation(simmat_infer, simmat_true)
+        print(
+            'Round {0} ({1} trials) | Loss: {2:.2f} | R^2: {3:.2f}'.format(
+                i_round, n_trial[i_round], loss[i_round], r_squared[i_round]
             )
+        )
+
+    results = {
+        'n_trial': np.expand_dims(n_trial, axis=1),
+        'loss': np.expand_dims(loss, axis=1),
+        'r_squared': np.expand_dims(r_squared, axis=1)
+    }
     return results
 
 
-def plot_exp2(results, figure_path):
+def plot_exp2(results, fp_figure):
     """Visualize results of experiment."""
     fontdict = {
         'fontsize': 10,
@@ -261,7 +397,7 @@ def plot_exp2(results, figure_path):
                 time_thresh, r2_thresh, marker='d', color=c_scatter[i_cond],
                 edgecolors='k')
             ax.text(
-                time_thresh, r2_thresh, "{0:.1f} hr".format(time_thresh),
+                time_thresh, r2_thresh + .06, "{0:.1f} hr".format(time_thresh),
                 fontdict=fontdict)
 
     ax.set_ylim(bottom=0., top=1.)
@@ -270,13 +406,14 @@ def plot_exp2(results, figure_path):
     ax.legend()
     plt.tight_layout()
 
-    if figure_path is None:
+    if fp_figure is None:
         plt.show()
     else:
         plt.savefig(
-            figure_path, format='pdf', bbox_inches="tight", dpi=100)
+            fp_figure.absolute().as_posix(), format='pdf',
+            bbox_inches="tight", dpi=100)
 
 
 if __name__ == "__main__":
-    results_path = '/Users/bdroads/Projects/psiz-app/results'
+    results_path = Path('/Users/bdroads/Projects/psiz-app/results')
     experiment_2(results_path)

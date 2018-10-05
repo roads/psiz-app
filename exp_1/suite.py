@@ -6,15 +6,14 @@ Description: TODO
 import os
 import multiprocessing
 from functools import partial
+from pathlib import Path
 
 import numpy as np
 from scipy.stats import sem
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 import pickle
-from pathlib import Path
 import matplotlib.pyplot as plt
-
 from psiz.trials import Observations, load_trials
 from psiz.models import Exponential, HeavyTailed, StudentsT
 from psiz.dimensionality import suggest_dimensionality
@@ -24,6 +23,7 @@ from psiz import datasets
 
 def experiment_1(results_path):
     """Experiment 1."""
+    print('Running Experiment 1...')
     # Settings
     n_fold = 10
     dataset_name = 'birds-16'

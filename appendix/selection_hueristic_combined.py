@@ -48,7 +48,7 @@ from psiz.trials import Docket
 from psiz.models import Exponential
 from psiz.simulate import Agent
 from psiz.generator import ActiveGenerator
-from psiz.utils import similarity_matrix, matrix_correlation
+from psiz.utils import similarity_matrix
 
 
 def main():
@@ -59,8 +59,8 @@ def main():
     n_reference = 2
     n_select = 1
     n_dim = 2
-    n_stimuli = 30
-    n_scenario = 100
+    n_stimuli = 30  # 50 TODO
+    n_scenario = 10  # 100 TODO
     n_keep = 3
 
     # Exhaustive set of trials.
@@ -132,7 +132,7 @@ def main():
 
 def ground_truth(n_dim, n_stimuli):
     """Return a ground truth embedding."""
-    # Sample embeddingp points from Gaussian.
+    # Sample embedding points from Gaussian.
     mean = np.zeros((n_dim))
     cov = .3 * np.identity(n_dim)
     z = np.random.multivariate_normal(mean, cov, (n_stimuli))

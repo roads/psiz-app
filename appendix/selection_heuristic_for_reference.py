@@ -29,7 +29,7 @@ from psiz.trials import Docket
 from psiz.models import Exponential
 from psiz.simulate import Agent
 from psiz.generator import ActiveGenerator
-from psiz.utils import similarity_matrix, matrix_correlation
+from psiz.utils import similarity_matrix
 
 
 def main():

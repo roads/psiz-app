@@ -17,7 +17,10 @@
 """Example that demonstrates information gain computation.
 
 A comparison of the expected information gain for different display
-configurations.
+configurations. For a given scenario, displays the best trial for each
+trial configuration (4-choose-2, 4-choose-1, 2-choose-1). The gray bars
+in the figure indicate the relative expected information gain compared
+to the worst and best trial.
 """
 
 import copy
@@ -114,7 +117,7 @@ def main():
 def process_scenario(model, origin_cov, n_sample, candidate_docket):
     """Evaluate scenario."""
     z_true = model.z['value']
-    (n_stimuli, n_dim) = z_true.shape
+    # (n_stimuli, n_dim) = z_true.shape
 
     samples = simulated_samples(z_true, n_sample, origin_cov)
     z_samp = samples['z']
@@ -155,8 +158,11 @@ def process_scenario(model, origin_cov, n_sample, candidate_docket):
 def scenario_subplot(
         fig, idx, z_true, z_samp, docket, ig, rel_ig, color_array):
     """Plot scenario (posterior samples and trial candidates)."""
+    lims_x = [-.95, .95]
+    lims_y = [-.95, .95]
+
     # Plot posterior samples of scenario.
-    posterior_subplot(fig, idx, z_samp, color_array)
+    posterior_subplot(fig, idx, z_samp, color_array, lims_x, lims_y)
 
     # Plot visualization of candidate trials and information gain.
     n_subplot = 3
@@ -166,10 +172,10 @@ def scenario_subplot(
             docket.stimulus_set[i_subplot],
             docket.n_select[i_subplot],
             ig[i_subplot], rel_ig[i_subplot],
-            color_array)
+            color_array, lims_x, lims_y)
 
 
-def posterior_subplot(fig, idx, z_samp, color_array):
+def posterior_subplot(fig, idx, z_samp, color_array, lims_x, lims_y):
     """Plot posterior samples."""
     (n_stimuli, n_dim, n_sample) = z_samp.shape
     z_samp = np.transpose(z_samp, axes=[2, 0, 1])
@@ -181,14 +187,15 @@ def posterior_subplot(fig, idx, z_samp, color_array):
         z_samp[:, 0], z_samp[:, 1],
         s=5, c=color_array_samp, alpha=.01, edgecolors='none')
     ax.set_aspect('equal')
-    ax.set_xlim(-.55, .55)
+    ax.set_xlim(lims_x[0], lims_x[1])
     ax.set_xticks([])
-    ax.set_ylim(-.55, .55)
+    ax.set_ylim(lims_y[0], lims_y[1])
     ax.set_yticks([])
 
 
 def candidate_subplot(
-        fig, idx, z, stimulus_set, n_select, ig, rel_ig, color_array):
+        fig, idx, z, stimulus_set, n_select, ig, rel_ig, color_array,
+        lims_x, lims_y):
     """Plot subplots for candidate trials."""
     locs = np.not_equal(stimulus_set, -1)
     stimulus_set = stimulus_set[locs]
@@ -209,17 +216,17 @@ def candidate_subplot(
         z[stimulus_set[1:], 1],
         s=15, c=color_array[stimulus_set[1:]], marker=r'$r$')
     ax.set_aspect('equal')
-    ax.set_xlim(-.55, .55)
+    ax.set_xlim(lims_x[0], lims_x[1])
     ax.set_xticks([])
-    ax.set_ylim(-.55, .55)
+    ax.set_ylim(lims_y[0], lims_y[1])
     ax.set_yticks([])
     rect_back = matplotlib.patches.Rectangle(
-        (.55, -.55), .06, 1.1, clip_on=False, color=[.9, .9, .9])
+        (lims_x[1], lims_y[0]), .06, lims_y[1] - lims_y[0], clip_on=False, color=[.9, .9, .9])
     ax.add_patch(rect_back)
     rect_val = matplotlib.patches.Rectangle(
-        (.55, -.55), .06, rel_ig * 1.1, clip_on=False, color=[.3, .3, .3])
+        (lims_x[1], lims_y[0]), .06, rel_ig * (lims_y[1] - lims_y[0]), clip_on=False, color=[.3, .3, .3])
     ax.add_patch(rect_val)
-    plt.text(-.45, .45, "{0}".format(n_select), fontdict=fontdict)
+    plt.text(lims_x[0] + .15, lims_y[1] - .15, "{0}".format(n_select), fontdict=fontdict)
 
 
 def ground_truth():
@@ -242,8 +249,16 @@ def ground_truth():
     y = r * np.sin(theta)
     x = np.expand_dims(x, axis=1)
     y = np.expand_dims(y, axis=1)
-    z_outer = np.hstack((x, y))
-    z = np.concatenate((origin, z_outer), axis=0)
+    z_inner = np.hstack((x, y))
+    z = np.concatenate((origin, z_inner), axis=0)
+
+    # r = .8
+    # x = r * np.cos(theta)
+    # y = r * np.sin(theta)
+    # x = np.expand_dims(x, axis=1)
+    # y = np.expand_dims(y, axis=1)
+    # z_outer = np.hstack((x, y))
+    # z = np.concatenate((z, z_outer), axis=0)
 
     # Create embedding model.
     n_group = 1

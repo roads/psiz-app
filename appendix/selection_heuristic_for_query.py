@@ -31,7 +31,7 @@ from psiz.models import Exponential
 from psiz.generator import ActiveGenerator, stimulus_entropy
 from psiz.utils import similarity_matrix
 
-
+# TODO two subplots: one for 2-choose-1, one for 8-choose-2
 def main():
     """Inspect the validity of the query selection heuristic."""
     # Settings.
@@ -40,8 +40,8 @@ def main():
     n_reference = 2
     n_select = 1
     n_dim = 2
-    n_stimuli = 20  # 25 TODO
-    n_scenario = 100
+    n_stimuli = 30
+    n_scenario = 25  # 100 TODO
 
     eligable_list = np.arange(n_stimuli, dtype=np.int32)
     stimulus_set = candidate_list(eligable_list, n_reference)
@@ -115,24 +115,33 @@ def ground_truth(n_dim, n_stimuli):
     """Return a ground truth embedding."""
     # Sample embeddingp points from Gaussian.
     mean = np.zeros((n_dim))
-    cov = .3 * np.identity(n_dim)
+    # cov = .3 * np.identity(n_dim)
+    cov = .03 * np.identity(n_dim)
     z = np.random.multivariate_normal(mean, cov, (n_stimuli))
 
     # Create embedding model.
     n_group = 1
     (n_stimuli, n_dim) = z.shape
     model = Exponential(n_stimuli, n_dim=n_dim, n_group=n_group)
+    # freeze_options = {
+    #     'z': z,
+    #     'theta': {
+    #         'rho': 2,
+    #         'tau': 1,
+    #         'beta': 7,
+    #         'gamma': 0
+    #     }
+    # }
     freeze_options = {
         'z': z,
         'theta': {
             'rho': 2,
             'tau': 1,
-            'beta': 7,
-            'gamma': 0
+            'beta': 10,
+            'gamma': 0.001
         }
     }
     model.freeze(freeze_options)
-
     # sim_mat = similarity_matrix(model.similarity, z)
     # idx_upper = np.triu_indices(n_stimuli, 1)
     # plt.hist(sim_mat[idx_upper])

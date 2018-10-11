@@ -16,6 +16,8 @@ import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 import pickle
+import tensorflow as tf
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 from psiz.models import Exponential, load_embedding
 from psiz.dimensionality import suggest_dimensionality
 from psiz.simulate import Agent
@@ -72,7 +74,7 @@ def experiment_2(results_path):
     # Filepaths.
     fp_emb_true = results_path / Path('emb_true_3d.hdf5')
     fp_data_r2c1 = results_path / Path('data_r2c1.p')
-    fp_data_r8c2 = results_path / Path('data_r8c2_warm.p')  # TODO
+    fp_data_r8c2 = results_path / Path('data_r8c2_test.p')
     fp_data_a8c2 = results_path / Path('data_a8c2.p')
     fp_figure_embedding = results_path / Path('emb.pdf')
     fp_figure_exp2a = results_path / Path('exp2a.pdf')
@@ -99,8 +101,8 @@ def experiment_2(results_path):
         'selection_policy': 'random',
         'n_reference': 8,
         'n_select': 2,
-        'n_trial_initial': 250,
-        'n_trial_total': 15250,
+        'n_trial_initial': 6000,  # 250, TODO
+        'n_trial_total': 6000,  # 15250, TODO
         'n_trial_per_round': 500,
         'time_s_per_trial': time_s_8c2
     }
@@ -130,11 +132,11 @@ def experiment_2(results_path):
     # simulate_multiple_runs(
     #     seed_list, emb_true, cond_info_r2c1, freeze_options, fp_data_r2c1)
 
-    # simulate_multiple_runs(
-    #     seed_list, emb_true, cond_info_r8c2, freeze_options, fp_data_r8c2)
-
     simulate_multiple_runs(
-        seed_list, emb_true, cond_info_a8c2, freeze_options, fp_data_a8c2)
+        seed_list, emb_true, cond_info_r8c2, freeze_options, fp_data_r8c2)
+
+    # simulate_multiple_runs(
+    #     seed_list, emb_true, cond_info_a8c2, freeze_options, fp_data_a8c2)
 
     # Visualize Experiment 2 results.
     # data_r2c1 = pickle.load(open(fp_data_r2c1, 'rb'))
@@ -242,17 +244,17 @@ def simulate_run_random(emb_true, cond_info, freeze_options, fp_data):
     # Initialize embedding.
     emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
     emb_inferred.freeze(freeze_options)
-
     for i_round in range(n_round):
         # Infer embedding.
         # if i_round < 1:
         #     init_mode = 'cold'
         # else:
         #     init_mode = 'warm'
+        emb_inferred.set_log(True, delete_prev=True)  # TODO
         init_mode = 'cold'
         include_idx = np.arange(0, n_trial[i_round])
         loss[i_round] = emb_inferred.fit(
-            obs.subset(include_idx), n_restart=50, init_mode=init_mode)
+            obs.subset(include_idx), n_restart=20, init_mode=init_mode, verbose=3)  # TODO 50, verbose
         # Compare the inferred model with ground truth by comparing the
         # similarity matrices implied by each model.
         simmat_infer = similarity_matrix(
@@ -451,4 +453,5 @@ def plot_exp2(results, fp_figure):
 
 if __name__ == "__main__":
     results_path = Path('/Users/bdroads/Projects/psiz-app/results')
+    # results_path = Path('/home/brett/packages/psiz-app/results')
     experiment_2(results_path)

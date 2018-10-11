@@ -6,11 +6,13 @@ results are saved to disk and loaded as needed.
 
 import os
 import copy
+import time
 import itertools
 from pathlib import Path
 
 import numpy as np
 from scipy.stats import sem
+import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 import pickle
@@ -21,7 +23,7 @@ from psiz.generator import RandomGenerator, ActiveGenerator
 from psiz import trials
 from psiz import datasets
 from psiz import visualize
-from psiz.utils import similarity_matrix, matrix_correlation
+from psiz.utils import similarity_matrix, matrix_comparison
 
 
 def experiment_2(results_path):
@@ -61,6 +63,7 @@ def experiment_2(results_path):
 
     """
     # TODO rerun 2 choose 1
+    # TODO rerun 8 choose 2
     # Settings.
     freeze_options = {'theta': {'rho': 2, 'beta': 10}}
     dataset_name = 'birds-16'
@@ -69,7 +72,7 @@ def experiment_2(results_path):
     # Filepaths.
     fp_emb_true = results_path / Path('emb_true_3d.hdf5')
     fp_data_r2c1 = results_path / Path('data_r2c1.p')
-    fp_data_r8c2 = results_path / Path('data_r8c2.p')
+    fp_data_r8c2 = results_path / Path('data_r8c2_warm.p')  # TODO
     fp_data_a8c2 = results_path / Path('data_a8c2.p')
     fp_figure_embedding = results_path / Path('emb.pdf')
     fp_figure_exp2a = results_path / Path('exp2a.pdf')
@@ -96,7 +99,7 @@ def experiment_2(results_path):
         'selection_policy': 'random',
         'n_reference': 8,
         'n_select': 2,
-        'n_trial_initial':  250,
+        'n_trial_initial': 250,
         'n_trial_total': 15250,
         'n_trial_per_round': 500,
         'time_s_per_trial': time_s_8c2
@@ -106,11 +109,11 @@ def experiment_2(results_path):
         'selection_policy': 'active',
         'n_reference': 8,
         'n_select': 2,
-        'n_trial_initial':  250,
+        'n_trial_initial': 250,
         'n_trial_total': 15250,
         'n_trial_per_round': 50,
         'time_s_per_trial': time_s_8c2,
-        'n_query': 25,
+        'n_query': 50,
     }
 
     # Experiment 2 setup: Infer a ground-truth embedding from real
@@ -134,9 +137,9 @@ def experiment_2(results_path):
         seed_list, emb_true, cond_info_a8c2, freeze_options, fp_data_a8c2)
 
     # Visualize Experiment 2 results.
-    # data_2c1_rand = pickle.load(open(fp_data_r2c1, 'rb'))
-    # data_8c2_rand = pickle.load(open(fp_data_r8c2, 'rb'))
-    # plot_exp2((data_2c1_rand, data_8c2_rand), fp_figure_exp2a)
+    # data_r2c1 = pickle.load(open(fp_data_r2c1, 'rb'))
+    # data_r8c2 = pickle.load(open(fp_data_r8c2, 'rb'))
+    # plot_exp2((data_r2c1, data_r8c2), fp_figure_exp2a)
 
 
 def experiment_2_setup(obs, catalog, freeze_options, fp_emb_true):
@@ -172,7 +175,7 @@ def simulate_multiple_runs(
     n_run = len(seed_list)
     for i_seed in range(n_run):
         np.random.seed(seed_list[i_seed])
-        results_run = simulate_run(emb_true, cond_info, freeze_options)
+        results_run = simulate_run(emb_true, cond_info, freeze_options, fp_data)
         results = concat_runs(results, results_run)
         data = {'info': cond_info, 'results': results}
         pickle.dump(data, open(fp_data, 'wb'))
@@ -190,14 +193,14 @@ def concat_runs(results, results_new):
     return results
 
 
-def simulate_run(emb_true, cond_info, freeze_options):
+def simulate_run(emb_true, cond_info, freeze_options, fp_data):
     """Simulate a single run."""
     if cond_info['selection_policy'] is 'random':
         results_run = simulate_run_random(
-            emb_true, cond_info, freeze_options)
+            emb_true, cond_info, freeze_options, fp_data)
     elif cond_info['selection_policy'] is 'active':
         results_run = simulate_run_active(
-            emb_true, cond_info, freeze_options)
+            emb_true, cond_info, freeze_options, fp_data)
     else:
         raise ValueError(
             'The `selection_policy` must be either "random" or "active".'
@@ -205,7 +208,7 @@ def simulate_run(emb_true, cond_info, freeze_options):
     return results_run
 
 
-def simulate_run_random(emb_true, cond_info, freeze_options):
+def simulate_run_random(emb_true, cond_info, freeze_options, fp_data):
     """Simulate random selection progress for a trial configuration.
 
     Record:
@@ -236,24 +239,37 @@ def simulate_run_random(emb_true, cond_info, freeze_options):
     r_squared = np.empty((n_round))
     loss = np.empty((n_round))
 
+    # Initialize embedding.
+    emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
+    emb_inferred.freeze(freeze_options)
+
     for i_round in range(n_round):
-        # Initialize embedding.
-        emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
-        emb_inferred.freeze(freeze_options)
-        # Infer embedding with cold restarts.
+        # Infer embedding.
+        # if i_round < 1:
+        #     init_mode = 'cold'
+        # else:
+        #     init_mode = 'warm'
+        init_mode = 'cold'
         include_idx = np.arange(0, n_trial[i_round])
         loss[i_round] = emb_inferred.fit(
-            obs.subset(include_idx), n_restart=20, init_mode='cold', verbose=0)
+            obs.subset(include_idx), n_restart=50, init_mode=init_mode)
         # Compare the inferred model with ground truth by comparing the
         # similarity matrices implied by each model.
         simmat_infer = similarity_matrix(
             emb_inferred.similarity, emb_inferred.z['value'])
-        r_squared[i_round] = matrix_correlation(simmat_infer, simmat_true)
+        r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
         print(
             'Round {0} ({1} trials) | Loss: {2:.2f} | R^2: {3:.2f}'.format(
                 i_round, n_trial[i_round], loss[i_round], r_squared[i_round]
             )
         )
+        results_temp = {
+            'n_trial': np.expand_dims(n_trial[0:i_round + 1], axis=1),
+            'loss': np.expand_dims(loss[0:i_round + 1], axis=1),
+            'r_squared': np.expand_dims(r_squared[0:i_round + 1], axis=1)
+        }
+        data = {'info': cond_info, 'results': results_temp}
+        pickle.dump(data, open(fp_data.absolute().as_posix() + '_temp', 'wb'))
 
     results = {
         'n_trial': np.expand_dims(n_trial, axis=1),
@@ -263,7 +279,7 @@ def simulate_run_random(emb_true, cond_info, freeze_options):
     return results
 
 
-def simulate_run_active(emb_true, cond_info, freeze_options):
+def simulate_run_active(emb_true, cond_info, freeze_options, fp_data):
     """Simulate active selection progress for a trial configuration.
 
     Record:
@@ -297,38 +313,57 @@ def simulate_run_active(emb_true, cond_info, freeze_options):
     # Infer initial model.
     emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
     emb_inferred.freeze(freeze_options)
-    loss[i_round] = emb_inferred.fit(
-        obs, n_restart=20, init_mode='cold', verbose=0)
+    loss[i_round] = emb_inferred.fit(obs, n_restart=50, init_mode='cold')
+    simmat_infer = similarity_matrix(
+        emb_inferred.similarity, emb_inferred.z['value'])
+    r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
+    print(
+        'Round {0} ({1} trials) | Loss: {2:.2f} | R^2: {3:.2f}'.format(
+            i_round, n_trial[i_round], loss[i_round], r_squared[i_round]
+        )
+    )
 
-    active_gen = ActiveGenerator()
+    config_list = pd.DataFrame({
+        'n_reference': np.array([8], dtype=np.int32),
+        'n_select': np.array([2], dtype=np.int32),
+        'is_ranked': [True],
+        'n_outcome': np.array([56], dtype=np.int32)
+    })
+    active_gen = ActiveGenerator(config_list=config_list, n_neighbor=15)
     # Infer independent models with increasing amounts of data.
     for i_round in np.arange(1, n_round + 1):
         # Select trials based on expected IG.
         samples = emb_inferred.posterior_samples(obs, n_sample=1000, n_burn=10)
+        print('Timer start...')
+        time_start = time.time()
         active_docket, _ = active_gen.generate(
             cond_info['n_trial_per_round'], emb_inferred, samples,
             n_query=cond_info['n_query'])
-
+        elapsed = time.time() - time_start
+        print('Elapsed time: {0:.2f} (m)'.format(elapsed / 60))
         # Simulate observations.
         new_obs = agent.simulate(active_docket)
         obs = trials.stack([obs, new_obs])
 
-        # Initialize embedding.
-        emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
-        emb_inferred.freeze(freeze_options)
         # Infer embedding with cold restarts.
-        loss[i_round] = emb_inferred.fit(
-            obs, n_restart=20, init_mode='cold', verbose=0)
+        loss[i_round] = emb_inferred.fit(obs, n_restart=50, init_mode='cold')
         # Compare the inferred model with ground truth by comparing the
         # similarity matrices implied by each model.
         simmat_infer = similarity_matrix(
             emb_inferred.similarity, emb_inferred.z['value'])
-        r_squared[i_round] = matrix_correlation(simmat_infer, simmat_true)
+        r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
         print(
             'Round {0} ({1} trials) | Loss: {2:.2f} | R^2: {3:.2f}'.format(
                 i_round, n_trial[i_round], loss[i_round], r_squared[i_round]
             )
         )
+        results_temp = {
+            'n_trial': np.expand_dims(n_trial[0:i_round + 1], axis=1),
+            'loss': np.expand_dims(loss[0:i_round + 1], axis=1),
+            'r_squared': np.expand_dims(r_squared[0:i_round + 1], axis=1)
+        }
+        data = {'info': cond_info, 'results': results_temp}
+        pickle.dump(data, open(fp_data.absolute().as_posix() + '_temp', 'wb'))
 
     results = {
         'n_trial': np.expand_dims(n_trial, axis=1),

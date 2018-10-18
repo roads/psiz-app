@@ -70,7 +70,7 @@ def experiment_2(results_path):
     seed_list = [913, 192, 785, 891, 841]
 
     # Filepaths.
-    fp_emb_true = results_path / Path('emb_true_3d.hdf5')
+    fp_emb_true = results_path / Path('emb_true_2d.hdf5')  # TODO
     fp_data_r2c1 = results_path / Path('exp_2/data_r2c1.p')
     fp_data_r8c2 = results_path / Path('exp_2/data_r8c2.p')
     fp_data_a8c2 = results_path / Path('exp_2/data_a8c2.p')
@@ -90,8 +90,8 @@ def experiment_2(results_path):
         'n_reference': 2,
         'n_select': 1,
         'n_trial_initial': 500,
-        'n_trial_total': 150500,
-        'n_trial_per_round': 5000,
+        'n_trial_total': 180500,
+        'n_trial_per_round': 6000,
         'time_s_per_trial': time_s_2c1
     }
     cond_info_r8c2 = {
@@ -111,9 +111,9 @@ def experiment_2(results_path):
         'n_select': 2,
         'n_trial_initial': 250,
         'n_trial_total': 15250,
-        'n_trial_per_round': 50,
+        'n_trial_per_round': 40,
         'time_s_per_trial': time_s_8c2,
-        'n_query': 50,
+        'n_query': 10,
     }
 
     # Experiment 2 setup: Infer a ground-truth embedding from real
@@ -126,7 +126,6 @@ def experiment_2(results_path):
     #     emb_true.z['value'], class_vec=catalog.stimuli.class_id.values,
     #     classes=catalog.class_label, filename=fp_figure_embedding)
 
-    # TODO
     # simulate_multiple_runs(
     #     seed_list, emb_true, cond_info_r2c1, freeze_options, fp_data_r2c1)
 
@@ -259,8 +258,8 @@ def simulate_run_random(emb_true, cond_info, freeze_options, fp_data):
             emb_inferred.similarity, emb_inferred.z['value'])
         r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
         print(
-            'Round {0} ({1} trials) | Loss: {2:.2f} | R^2: {3:.2f}'.format(
-                i_round, n_trial[i_round], loss[i_round], r_squared[i_round]
+            'Round {0} ({1:d} trials) | Loss: {2:.2f} | R^2: {3:.2f}'.format(
+                i_round, int(n_trial[i_round]), loss[i_round], r_squared[i_round]
             )
         )
         results_temp = {
@@ -293,12 +292,12 @@ def simulate_run_active(emb_true, cond_info, freeze_options, fp_data):
         emb_true.similarity, emb_true.z['value'])
 
     # Pre-allocate metrics.
-    n_trial = np.arange(
+    n_round = len(np.arange(
         cond_info['n_trial_initial'],
         cond_info['n_trial_total'] + 1,
         cond_info['n_trial_per_round']
-    )
-    n_round = len(n_trial)
+    ))
+    n_trial = np.empty((n_round))
     r_squared = np.empty((n_round))
     loss = np.empty((n_round))
 
@@ -313,13 +312,14 @@ def simulate_run_active(emb_true, cond_info, freeze_options, fp_data):
     # Infer initial model.
     emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
     emb_inferred.freeze(freeze_options)
+    n_trial[i_round] = obs.n_trial
     loss[i_round] = emb_inferred.fit(obs, n_restart=50, init_mode='cold')
     simmat_infer = similarity_matrix(
         emb_inferred.similarity, emb_inferred.z['value'])
     r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
     print(
-        'Round {0} ({1} trials) | Loss: {2:.2f} | R^2: {3:.2f}'.format(
-            i_round, n_trial[i_round], loss[i_round], r_squared[i_round]
+        'Round {0} ({1:d} trials) | Loss: {2:.2f} | R^2: {3:.2f}'.format(
+            i_round, int(n_trial[i_round]), loss[i_round], r_squared[i_round]
         )
     )
 
@@ -333,17 +333,17 @@ def simulate_run_active(emb_true, cond_info, freeze_options, fp_data):
     # Infer independent models with increasing amounts of data.
     for i_round in np.arange(1, n_round + 1):
         # Select trials based on expected IG.
-        samples = emb_inferred.posterior_samples(obs, n_sample=1000, n_burn=10)
-        # print('Timer start...')
-        # time_start = time.time()
+        samples = emb_inferred.posterior_samples(obs, n_sample=2000, n_burn=100)
+        time_start = time.time()
         active_docket, _ = active_gen.generate(
             cond_info['n_trial_per_round'], emb_inferred, samples,
             n_query=cond_info['n_query'])
-        # elapsed = time.time() - time_start
-        # print('Elapsed time: {0:.2f} (m)'.format(elapsed / 60))
+        elapsed = time.time() - time_start
+        print('Elapsed time: {0:.2f} (m)'.format(elapsed / 60))
         # Simulate observations.
         new_obs = agent.simulate(active_docket)
         obs = trials.stack([obs, new_obs])
+        n_trial[i_round] = obs.n_trial
 
         # Infer embedding with cold restarts.
         loss[i_round] = emb_inferred.fit(obs, n_restart=50, init_mode='cold')
@@ -353,8 +353,8 @@ def simulate_run_active(emb_true, cond_info, freeze_options, fp_data):
             emb_inferred.similarity, emb_inferred.z['value'])
         r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
         print(
-            'Round {0} ({1} trials) | Loss: {2:.2f} | R^2: {3:.2f}'.format(
-                i_round, n_trial[i_round], loss[i_round], r_squared[i_round]
+            'Round {0} ({1:d} trials) | Loss: {2:.2f} | R^2: {3:.2f}'.format(
+                i_round, int(n_trial[i_round]), loss[i_round], r_squared[i_round]
             )
         )
         results_temp = {
@@ -410,6 +410,8 @@ def plot_exp2(results, fp_figure):
         # loss = np.mean(condition['loss'], axis=1)
         r_squared = condition['results']['r_squared']
         r_squared_mean = np.mean(r_squared, axis=1)
+        r_squared_min = np.min(r_squared, axis=1)
+        r_squared_max = np.max(r_squared, axis=1)
         r_squared_sem = sem(r_squared, axis=1)
 
         ax.plot(
@@ -417,8 +419,8 @@ def plot_exp2(results, fp_figure):
             label=name)
         ax.fill_between(
             time_cost_hr,
-            r_squared_mean - r_squared_sem,
-            r_squared_mean + r_squared_sem,
+            r_squared_min,
+            r_squared_max,
             color=c_env[i_cond]
         )
         # Add text at .9 R^2 breakpoint.

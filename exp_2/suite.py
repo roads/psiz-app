@@ -65,15 +65,15 @@ def experiment_2(results_path):
 
     """
     # Settings.
-    freeze_options = {'theta': {'rho': 2}}  # 'beta': 10 TODO
+    freeze_options = {'theta': {'rho': 2., 'tau': 1.}}
     dataset_name = 'birds-16'
     seed_list = [913, 192, 785, 891, 841]
 
     # Filepaths.  # TODO
-    fp_emb_true = results_path / Path('emb_true_2d.hdf5')
-    fp_data_r2c1 = results_path / Path('exp_2/data_r2c1.p')
-    fp_data_r8c2 = results_path / Path('exp_2/data_r8c2_2d.p')
-    fp_data_a8c2 = results_path / Path('exp_2/data_a8c2_2d.p')
+    fp_emb_true = results_path / Path('emb_true_3d.hdf5')
+    fp_data_r2c1 = results_path / Path('exp_2/data_r2c1_3d.p')
+    fp_data_r8c2 = results_path / Path('exp_2/data_r8c2_3d.p')
+    fp_data_a8c2 = results_path / Path('exp_2/data_a8c2_3d.p')
     fp_figure_embedding = results_path / Path('emb.pdf')
     fp_figure_exp2a = results_path / Path('exp_2/exp2a.pdf')
     fp_figure_exp2b = results_path / Path('exp_2/exp2b.pdf')
@@ -132,8 +132,8 @@ def experiment_2(results_path):
     # simulate_multiple_runs(
     #     seed_list, emb_true, cond_info_r2c1, freeze_options, fp_data_r2c1)
 
-    # simulate_multiple_runs(
-    #     seed_list, emb_true, cond_info_r8c2, freeze_options, fp_data_r8c2)
+    simulate_multiple_runs(
+        seed_list, emb_true, cond_info_r8c2, freeze_options, fp_data_r8c2)
 
     # simulate_multiple_runs(
     #     seed_list, emb_true, cond_info_a8c2, freeze_options, fp_data_a8c2)
@@ -152,12 +152,12 @@ def experiment_2_setup(obs, catalog, freeze_options, fp_emb_true):
     # n_dim = suggest_dimensionality(
     #     obs, Exponential, catalog.n_stimuli, freeze_options=freeze_options,
     #     verbose=1)
-    n_dim = 2  # TODO
+    n_dim = 3  # TODO
 
     # Determine embedding using all available observation data.
     emb_true = Exponential(catalog.n_stimuli, n_dim)
     emb_true.freeze(freeze_options)
-    emb_true.fit(obs, n_restart=50, verbose=3)
+    emb_true.fit(obs, n_restart=100)
     emb_true.save(fp_emb_true)
 
 

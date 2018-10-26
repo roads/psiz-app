@@ -55,13 +55,13 @@ def main():
     """Compare hueristic and exhaustive search method for trial selection."""
     # Settings.
     np.random.seed(123)
-    n_sample = 2000
-    n_reference = 2
-    n_select = 1
+    n_sample = 1000
+    n_reference = 8
+    n_select = 2
     n_dim = 2
-    n_stimuli = 30  # 50 TODO
-    n_scenario = 10  # 100 TODO
-    n_keep = 3
+    n_stimuli = 200  # 50 TODO
+    n_scenario = 1  # 100 TODO
+    n_keep = 40
 
     # Exhaustive set of trials.
     eligable_list = np.arange(n_stimuli, dtype=np.int32)
@@ -78,56 +78,56 @@ def main():
         samples = simulated_samples(model.z['value'], n_sample)
 
         config_list = pd.DataFrame({
-            'n_reference': np.array([2], dtype=np.int32),
-            'n_select': np.array([1], dtype=np.int32),
+            'n_reference': np.array([8], dtype=np.int32),
+            'n_select': np.array([2], dtype=np.int32),
             'is_ranked': [True],
-            'n_outcome': np.array([2], dtype=np.int32)
+            'n_outcome': np.array([56], dtype=np.int32)
         })
         gen = ActiveGenerator(config_list=config_list, n_neighbor=12)
 
         # Exhaustive search.
-        ig = gen._information_gain(model, samples, candidate_docket)
-        min_ig = np.min(ig)
-        rel_ig = ig - min_ig
-        max_rel_ig = np.max(rel_ig)
-        rel_ig = rel_ig / max_rel_ig
-        # Find best trial for each stimulus when serving as query.
-        exha_rel_ig_stim = np.empty((n_stimuli))
-        for i_stim in range(n_stimuli):
-            locs = np.equal(candidate_docket.stimulus_set[:, 0], i_stim)
-            curr_rel_ig = rel_ig[locs]
-            sorted_idx = np.argsort(-curr_rel_ig)
-            sorted_rel_ig = curr_rel_ig[sorted_idx]
-            exha_rel_ig_stim[i_stim] = sorted_rel_ig[0]
-        exha_rel_ig_stim = -np.sort(-exha_rel_ig_stim)
-        exha_rel_ig_stim = exha_rel_ig_stim[0:n_keep]
+        # ig = gen._information_gain(model, samples, candidate_docket)
+        # min_ig = np.min(ig)
+        # rel_ig = ig - min_ig
+        # max_rel_ig = np.max(rel_ig)
+        # rel_ig = rel_ig / max_rel_ig
+        # # Find best trial for each stimulus when serving as query.
+        # exha_rel_ig_stim = np.empty((n_stimuli))
+        # for i_stim in range(n_stimuli):
+        #     locs = np.equal(candidate_docket.stimulus_set[:, 0], i_stim)
+        #     curr_rel_ig = rel_ig[locs]
+        #     sorted_idx = np.argsort(-curr_rel_ig)
+        #     sorted_rel_ig = curr_rel_ig[sorted_idx]
+        #     exha_rel_ig_stim[i_stim] = sorted_rel_ig[0]
+        # exha_rel_ig_stim = -np.sort(-exha_rel_ig_stim)
+        # exha_rel_ig_stim = exha_rel_ig_stim[0:n_keep]
 
         # Hueristic search.
         (_, heur_ig_stim) = gen.generate(
-            n_keep, model, samples, n_query=n_stimuli)
-        heur_rel_ig_stim = (heur_ig_stim - min_ig) / max_rel_ig
+            n_keep, model, samples, n_query=40)
+        # heur_rel_ig_stim = (heur_ig_stim - min_ig) / max_rel_ig
 
-        # Compute difference between heuristic and exhaustive search.
-        diff_ig[i_scenario] = (
-            np.sum(exha_rel_ig_stim) - np.sum(heur_rel_ig_stim)) / n_stimuli
+        # # Compute difference between heuristic and exhaustive search.
+        # diff_ig[i_scenario] = (
+        #     np.sum(exha_rel_ig_stim) - np.sum(heur_rel_ig_stim)) / n_stimuli
 
-    print('Percent of Global Optimum')
-    print('  Minimum: {0:.1f}'.format(100 * np.min(1-diff_ig)))
-    print('  Mean:    {0:.1f}'.format(100 * np.mean(1-diff_ig)))
-    print('  Median:  {0:.1f}'.format(100 * np.median(1-diff_ig)))
-    print('  Maximum: {0:.1f}'.format(100 * np.max(1-diff_ig)))
-    print('')
+    # print('Percent of Global Optimum')
+    # print('  Minimum: {0:.1f}'.format(100 * np.min(1-diff_ig)))
+    # print('  Mean:    {0:.1f}'.format(100 * np.mean(1-diff_ig)))
+    # print('  Median:  {0:.1f}'.format(100 * np.median(1-diff_ig)))
+    # print('  Maximum: {0:.1f}'.format(100 * np.max(1-diff_ig)))
+    # print('')
 
-    bin_edges = np.linspace(.9, 1., 11)
-    fig = plt.figure(figsize=(6.5, 2), dpi=200)
-    ax = fig.add_subplot(1, 1, 1)
-    ax.hist(1. - diff_ig, bins=bin_edges)
-    ax.set_xticks(bin_edges)
-    ax.set_xticklabels((100*bin_edges).astype(np.int32))
-    ax.set_xlabel('Percent of Global Optimum')
-    ax.set_ylabel('Frequency')
-    plt.tight_layout()
-    plt.show()
+    # bin_edges = np.linspace(.9, 1., 11)
+    # fig = plt.figure(figsize=(6.5, 2), dpi=200)
+    # ax = fig.add_subplot(1, 1, 1)
+    # ax.hist(1. - diff_ig, bins=bin_edges)
+    # ax.set_xticks(bin_edges)
+    # ax.set_xticklabels((100*bin_edges).astype(np.int32))
+    # ax.set_xlabel('Percent of Global Optimum')
+    # ax.set_ylabel('Frequency')
+    # plt.tight_layout()
+    # plt.show()
 
 
 def ground_truth(n_dim, n_stimuli):

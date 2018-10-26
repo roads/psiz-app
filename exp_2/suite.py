@@ -65,15 +65,15 @@ def experiment_2(results_path):
 
     """
     # Settings.
-    freeze_options = {'theta': {'rho': 2, 'beta': 10}}
+    freeze_options = {'theta': {'rho': 2}}  # 'beta': 10 TODO
     dataset_name = 'birds-16'
     seed_list = [913, 192, 785, 891, 841]
 
-    # Filepaths.
-    fp_emb_true = results_path / Path('emb_true_2d.hdf5')  # TODO
+    # Filepaths.  # TODO
+    fp_emb_true = results_path / Path('emb_true_2d.hdf5')
     fp_data_r2c1 = results_path / Path('exp_2/data_r2c1.p')
-    fp_data_r8c2 = results_path / Path('exp_2/data_r8c2.p')
-    fp_data_a8c2 = results_path / Path('exp_2/data_a8c2.p')
+    fp_data_r8c2 = results_path / Path('exp_2/data_r8c2_2d.p')
+    fp_data_a8c2 = results_path / Path('exp_2/data_a8c2_2d.p')
     fp_figure_embedding = results_path / Path('emb.pdf')
     fp_figure_exp2a = results_path / Path('exp_2/exp2a.pdf')
     fp_figure_exp2b = results_path / Path('exp_2/exp2b.pdf')
@@ -99,8 +99,8 @@ def experiment_2(results_path):
         'selection_policy': 'random',
         'n_reference': 8,
         'n_select': 2,
-        'n_trial_initial': 250,
-        'n_trial_total': 15250,
+        'n_trial_initial': 500,
+        'n_trial_total': 15000,
         'n_trial_per_round': 500,
         'time_s_per_trial': time_s_8c2
     }
@@ -109,19 +109,20 @@ def experiment_2(results_path):
         'selection_policy': 'active',
         'n_reference': 8,
         'n_select': 2,
-        'n_trial_initial': 250,
-        'n_trial_total': 15250,
+        'n_trial_initial': 500,
+        'n_trial_total': 15000,
         'n_trial_per_round': 40,
         'time_s_per_trial': time_s_8c2,
-        'n_query': 10,
+        'n_query': 40,
     }
 
     # Experiment 2 setup: Infer a ground-truth embedding from real
     # observations.
-    # experiment_2_setup(obs, catalog, freeze_options, fp_emb_true) TODO
+    # experiment_2_setup(obs, catalog, freeze_options, fp_emb_true)
 
     emb_true = load_embedding(fp_emb_true)
-    # Visualize ground-truth embedding. TODO
+
+    # Visualize ground-truth embedding.
     # visualize.visualize_embedding_static(
     #     emb_true.z['value'], class_vec=catalog.stimuli.class_id.values,
     #     classes=catalog.class_label, filename=fp_figure_embedding)
@@ -146,14 +147,15 @@ def experiment_2_setup(obs, catalog, freeze_options, fp_emb_true):
     np.random.seed(123)
 
     # Determine dimensionality.
-    n_dim = suggest_dimensionality(
-        obs, Exponential, catalog.n_stimuli, freeze_options=freeze_options,
-        verbose=1)
+    # n_dim = suggest_dimensionality(
+    #     obs, Exponential, catalog.n_stimuli, freeze_options=freeze_options,
+    #     verbose=1)
+    n_dim = 2  # TODO
 
     # Determine embedding using all available observation data.
     emb_true = Exponential(catalog.n_stimuli, n_dim)
     emb_true.freeze(freeze_options)
-    emb_true.fit(obs, n_restart=40, verbose=3)
+    emb_true.fit(obs, n_restart=50, verbose=3)
     emb_true.save(fp_emb_true)
 
 
@@ -243,15 +245,10 @@ def simulate_run_random(emb_true, cond_info, freeze_options, fp_data):
     emb_inferred.freeze(freeze_options)
     for i_round in range(n_round):
         # Infer embedding.
-        # if i_round < 1:
-        #     init_mode = 'cold'
-        # else:
-        #     init_mode = 'warm'
-        # emb_inferred.set_log(True, delete_prev=True)  # TODO
         init_mode = 'cold'
         include_idx = np.arange(0, n_trial[i_round])
         loss[i_round] = emb_inferred.fit(
-            obs.subset(include_idx), n_restart=20, init_mode=init_mode, verbose=3)  # TODO 50, verbose
+            obs.subset(include_idx), n_restart=100, init_mode=init_mode)
         # Compare the inferred model with ground truth by comparing the
         # similarity matrices implied by each model.
         simmat_infer = similarity_matrix(
@@ -313,13 +310,18 @@ def simulate_run_active(emb_true, cond_info, freeze_options, fp_data):
     emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
     emb_inferred.freeze(freeze_options)
     n_trial[i_round] = obs.n_trial
-    loss[i_round] = emb_inferred.fit(obs, n_restart=50, init_mode='cold')
+    loss[i_round] = emb_inferred.fit(obs, n_restart=100, init_mode='cold')
     simmat_infer = similarity_matrix(
         emb_inferred.similarity, emb_inferred.z['value'])
     r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
     print(
-        'Round {0} ({1:d} trials) | Loss: {2:.2f} | R^2: {3:.2f}'.format(
-            i_round, int(n_trial[i_round]), loss[i_round], r_squared[i_round]
+        'Round {0} ({1:d} trials) | Loss: {2:.2f} | R^2: {3:.2f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.1g}'.format(
+            i_round, int(n_trial[i_round]), loss[i_round],
+            r_squared[i_round],
+            emb_inferred.theta['rho']['value'],
+            emb_inferred.theta['tau']['value'],
+            emb_inferred.theta['beta']['value'],
+            emb_inferred.theta['gamma']['value']
         )
     )
 
@@ -329,32 +331,49 @@ def simulate_run_active(emb_true, cond_info, freeze_options, fp_data):
         'is_ranked': [True],
         'n_outcome': np.array([56], dtype=np.int32)
     })
-    active_gen = ActiveGenerator(config_list=config_list, n_neighbor=10)
+    active_gen = ActiveGenerator(config_list=config_list, n_neighbor=15)
     # Infer independent models with increasing amounts of data.
     for i_round in np.arange(1, n_round + 1):
         # Select trials based on expected IG.
-        samples = emb_inferred.posterior_samples(obs, n_sample=2000, n_burn=100)
+        time_start = time.time()
+        samples = emb_inferred.posterior_samples(
+            obs, n_final_sample=1000, n_burn=100, thin_step=10)
+        # z_init=samples[:,:,-1]
+        elapsed = time.time() - time_start
+        print('Posterior | Elapsed time: {0:.2f} m'.format(elapsed / 60))
+        emb_inferred.z['value'] = np.median(samples['z'], axis=2)
+
         time_start = time.time()
         active_docket, _ = active_gen.generate(
             cond_info['n_trial_per_round'], emb_inferred, samples,
             n_query=cond_info['n_query'])
         elapsed = time.time() - time_start
-        print('Elapsed time: {0:.2f} (m)'.format(elapsed / 60))
+        print('Active | Elapsed time: {0:.2f} m'.format(elapsed / 60))
         # Simulate observations.
         new_obs = agent.simulate(active_docket)
         obs = trials.stack([obs, new_obs])
         n_trial[i_round] = obs.n_trial
 
-        # Infer embedding with cold restarts.
-        loss[i_round] = emb_inferred.fit(obs, n_restart=50, init_mode='cold')
+        if np.mod(i_round, 5) == 0:
+            # Infer new embedding with cold restarts.
+            freeze_options = {'theta': {'rho': 2}, 'z' :emb_inferred.z['value']}
+            emb_inferred.freeze(freeze_options)
+            loss[i_round] = emb_inferred.fit(obs, n_restart=10, init_mode='cold')
+        else:
+            loss[i_round] = emb_inferred.evaluate(obs)
         # Compare the inferred model with ground truth by comparing the
         # similarity matrices implied by each model.
         simmat_infer = similarity_matrix(
             emb_inferred.similarity, emb_inferred.z['value'])
         r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
         print(
-            'Round {0} ({1:d} trials) | Loss: {2:.2f} | R^2: {3:.2f}'.format(
-                i_round, int(n_trial[i_round]), loss[i_round], r_squared[i_round]
+            'Round {0} ({1:d} trials) | Loss: {2:.2f} | R^2: {3:.2f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.1g}'.format(
+                i_round, int(n_trial[i_round]), loss[i_round],
+                r_squared[i_round],
+                emb_inferred.theta['rho']['value'],
+                emb_inferred.theta['tau']['value'],
+                emb_inferred.theta['beta']['value'],
+                emb_inferred.theta['gamma']['value']
             )
         )
         results_temp = {

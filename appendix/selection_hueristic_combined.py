@@ -55,11 +55,11 @@ def main():
     """Compare hueristic and exhaustive search method for trial selection."""
     # Settings.
     np.random.seed(123)
-    n_sample = 2000
-    n_reference = 2
-    n_select = 1
+    n_sample = 1000
+    n_reference = 8
+    n_select = 2
     n_dim = 2
-    n_stimuli = 30  # 50 TODO
+    n_stimuli = 10  # 50 TODO
     n_scenario = 10  # 100 TODO
     n_keep = 3
 
@@ -78,10 +78,10 @@ def main():
         samples = simulated_samples(model.z['value'], n_sample)
 
         config_list = pd.DataFrame({
-            'n_reference': np.array([2], dtype=np.int32),
-            'n_select': np.array([1], dtype=np.int32),
+            'n_reference': np.array([n_reference], dtype=np.int32),
+            'n_select': np.array([n_select], dtype=np.int32),
             'is_ranked': [True],
-            'n_outcome': np.array([2], dtype=np.int32)
+            'n_outcome': np.array([56], dtype=np.int32)  # TODO 2
         })
         gen = ActiveGenerator(config_list=config_list, n_neighbor=12)
 

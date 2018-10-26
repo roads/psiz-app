@@ -125,7 +125,9 @@ def experiment_2(results_path):
     # Visualize ground-truth embedding.
     # visualize.visualize_embedding_static(
     #     emb_true.z['value'], class_vec=catalog.stimuli.class_id.values,
-    #     classes=catalog.class_label, filename=fp_figure_embedding)
+    #     classes=catalog.class_label,
+    #     filename=fp_figure_embedding.absolute().as_posix()
+    # )
 
     # simulate_multiple_runs(
     #     seed_list, emb_true, cond_info_r2c1, freeze_options, fp_data_r2c1)
@@ -133,8 +135,8 @@ def experiment_2(results_path):
     # simulate_multiple_runs(
     #     seed_list, emb_true, cond_info_r8c2, freeze_options, fp_data_r8c2)
 
-    simulate_multiple_runs(
-        seed_list, emb_true, cond_info_a8c2, freeze_options, fp_data_a8c2)
+    # simulate_multiple_runs(
+    #     seed_list, emb_true, cond_info_a8c2, freeze_options, fp_data_a8c2)
 
     # Visualize Experiment 2 results.
     # data_r2c1 = pickle.load(open(fp_data_r2c1, 'rb'))
@@ -471,7 +473,7 @@ def plot_exp2(results, fp_figure):
 
 
 if __name__ == "__main__":
-    # results_path = Path('/Users/bdroads/Projects/psiz-app/results')
+    results_path = Path('/Users/bdroads/Projects/psiz-app/results')
     # results_path = Path('/home/brett/packages/psiz-app/results')
-    results_path = Path('/home/brett/Projects/psiz-app.git/results')
+    # results_path = Path('/home/brett/Projects/psiz-app.git/results')
     experiment_2(results_path)

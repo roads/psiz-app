@@ -257,8 +257,13 @@ def simulate_run_random(emb_true, cond_info, freeze_options, fp_data):
             emb_inferred.similarity, emb_inferred.z['value'])
         r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
         print(
-            'Round {0} ({1:d} trials) | Loss: {2:.2f} | R^2: {3:.2f}'.format(
-                i_round, int(n_trial[i_round]), loss[i_round], r_squared[i_round]
+            'Round {0} ({1:d} trials) | Loss: {2:.2f} | R^2: {3:.2f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.1g}'.format(
+                i_round, int(n_trial[i_round]), loss[i_round],
+                r_squared[i_round],
+                emb_inferred.theta['rho']['value'],
+                emb_inferred.theta['tau']['value'],
+                emb_inferred.theta['beta']['value'],
+                emb_inferred.theta['gamma']['value']
             )
         )
         results_temp = {
@@ -473,7 +478,7 @@ def plot_exp2(results, fp_figure):
 
 
 if __name__ == "__main__":
-    results_path = Path('/Users/bdroads/Projects/psiz-app/results')
-    # results_path = Path('/home/brett/packages/psiz-app/results')
+    # results_path = Path('/Users/bdroads/Projects/psiz-app/results')
+    results_path = Path('/home/brett/packages/psiz-app/results')
     # results_path = Path('/home/brett/Projects/psiz-app.git/results')
     experiment_2(results_path)

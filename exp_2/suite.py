@@ -110,7 +110,7 @@ def experiment_2(results_path):
         'n_reference': 8,
         'n_select': 2,
         'n_trial_initial': 500,
-        'n_trial_total': 15000,
+        'n_trial_total': 10000,
         'n_trial_per_round': 40,
         'time_s_per_trial': time_s_8c2,
         'n_query': 40,
@@ -132,11 +132,11 @@ def experiment_2(results_path):
     # simulate_multiple_runs(
     #     seed_list, emb_true, cond_info_r2c1, freeze_options, fp_data_r2c1)
 
-    simulate_multiple_runs(
-        seed_list, emb_true, cond_info_r8c2, freeze_options, fp_data_r8c2)
-
     # simulate_multiple_runs(
-    #     seed_list, emb_true, cond_info_a8c2, freeze_options, fp_data_a8c2)
+    #     seed_list, emb_true, cond_info_r8c2, freeze_options, fp_data_r8c2)
+
+    simulate_multiple_runs(
+        seed_list, emb_true, cond_info_a8c2, freeze_options, fp_data_a8c2)
 
     # Visualize Experiment 2 results.
     # data_r2c1 = pickle.load(open(fp_data_r2c1, 'rb'))
@@ -304,6 +304,9 @@ def simulate_run_active(emb_true, cond_info, freeze_options, fp_data):
     n_trial = np.empty((n_round))
     r_squared = np.empty((n_round))
     loss = np.empty((n_round))
+    is_valid = np.zeros((n_round), dtype=bool)
+    at_criterion = False
+    remaining_rounds = 5
 
     # The first round is seed using a randomly generated docket.
     i_round = 0
@@ -317,10 +320,11 @@ def simulate_run_active(emb_true, cond_info, freeze_options, fp_data):
     emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
     emb_inferred.freeze(freeze_options)
     n_trial[i_round] = obs.n_trial
-    loss[i_round] = emb_inferred.fit(obs, n_restart=100, init_mode='cold')
+    loss[i_round] = emb_inferred.fit(obs, n_restart=50, init_mode='cold')
     simmat_infer = similarity_matrix(
         emb_inferred.similarity, emb_inferred.z['value'])
     r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
+    is_valid[i_round] = True
     print(
         'Round {0} ({1:d} trials) | Loss: {2:.2f} | R^2: {3:.2f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.1g}'.format(
             i_round, int(n_trial[i_round]), loss[i_round],
@@ -338,7 +342,7 @@ def simulate_run_active(emb_true, cond_info, freeze_options, fp_data):
         'is_ranked': [True],
         'n_outcome': np.array([56], dtype=np.int32)
     })
-    active_gen = ActiveGenerator(config_list=config_list, n_neighbor=15)
+    active_gen = ActiveGenerator(config_list=config_list, n_neighbor=12)
     # Infer independent models with increasing amounts of data.
     for i_round in np.arange(1, n_round + 1):
         # Select trials based on expected IG.
@@ -362,10 +366,11 @@ def simulate_run_active(emb_true, cond_info, freeze_options, fp_data):
         n_trial[i_round] = obs.n_trial
 
         if np.mod(i_round, 5) == 0:
-            # Infer new embedding with cold restarts.
-            freeze_options = {'theta': {'rho': 2}, 'z' :emb_inferred.z['value']}
+            # Infer new embedding with exact restarts.
+            freeze_options = {'z': emb_inferred.z['value']}
             emb_inferred.freeze(freeze_options)
-            loss[i_round] = emb_inferred.fit(obs, n_restart=10, init_mode='cold')
+            loss[i_round] = emb_inferred.fit(
+                obs, n_restart=10, init_mode='exact')
         else:
             loss[i_round] = emb_inferred.evaluate(obs)
         # Compare the inferred model with ground truth by comparing the
@@ -373,6 +378,7 @@ def simulate_run_active(emb_true, cond_info, freeze_options, fp_data):
         simmat_infer = similarity_matrix(
             emb_inferred.similarity, emb_inferred.z['value'])
         r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
+        is_valid[i_round] = True
         print(
             'Round {0} ({1:d} trials) | Loss: {2:.2f} | R^2: {3:.2f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.1g}'.format(
                 i_round, int(n_trial[i_round]), loss[i_round],
@@ -386,15 +392,23 @@ def simulate_run_active(emb_true, cond_info, freeze_options, fp_data):
         results_temp = {
             'n_trial': np.expand_dims(n_trial[0:i_round + 1], axis=1),
             'loss': np.expand_dims(loss[0:i_round + 1], axis=1),
-            'r_squared': np.expand_dims(r_squared[0:i_round + 1], axis=1)
+            'r_squared': np.expand_dims(r_squared[0:i_round + 1], axis=1),
+            'is_valid': np.expand_dims(is_valid[0:i_round + 1], axis=1)
         }
         data = {'info': cond_info, 'results': results_temp}
         pickle.dump(data, open(fp_data.absolute().as_posix() + '_temp', 'wb'))
+        if r_squared[i_round] > .9:
+            at_criterion = True
+        if at_criterion:
+            remaining_rounds = remaining_rounds - 1
+        if remaining_rounds < 0:
+            break
 
     results = {
         'n_trial': np.expand_dims(n_trial, axis=1),
         'loss': np.expand_dims(loss, axis=1),
-        'r_squared': np.expand_dims(r_squared, axis=1)
+        'r_squared': np.expand_dims(r_squared, axis=1),
+        'is_valid': np.expand_dims(is_valid, axis=1)
     }
     return results
 
@@ -478,7 +492,7 @@ def plot_exp2(results, fp_figure):
 
 
 if __name__ == "__main__":
-    # results_path = Path('/Users/bdroads/Projects/psiz-app/results')
-    results_path = Path('/home/brett/packages/psiz-app/results')
+    results_path = Path('/Users/bdroads/Projects/psiz-app/results')
+    # results_path = Path('/home/brett/packages/psiz-app/results')
     # results_path = Path('/home/brett/Projects/psiz-app.git/results')
     experiment_2(results_path)

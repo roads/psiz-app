@@ -12,9 +12,9 @@ import pickle
 
 def main(results_path):
     fp_data_r2c1 = results_path / Path('exp_2/data_r2c1.p')
-    fp_data_r8c2 = results_path / Path('exp_2/data_r8c2_2d.p_temp')
-    fp_data_a8c2 = results_path / Path('exp_2/data_a8c2_2d.p_temp')
-    fp_figure_exp2b = results_path / Path('exp_2/exp2b.pdf')
+    fp_data_r8c2 = results_path / Path('exp_2/data_r8c2_3d.p')
+    fp_data_a8c2 = results_path / Path('exp_2/data_a8c2_3d.p_temp')
+    fp_figure_exp2b = results_path / Path('exp_2/exp2b_3d.pdf')
 
     data_r8c2 = pickle.load(open(fp_data_r8c2, 'rb'))
     data_a8c2 = pickle.load(open(fp_data_a8c2, 'rb'))
@@ -35,25 +35,25 @@ def main(results_path):
     fig, ax = plt.subplots(1, 1, figsize=(6, 4))
 
     f = 1  # time_s_8c2 / (60 * 60)
-    # time_cost_hr_avg = np.mean(data_r8c2['results']['n_trial'] * f, axis=1)
-    # r_squared_mean_avg = np.mean(data_r8c2['results']['r_squared'], axis=1)
-    # r_squared_mean_min = np.min(data_r8c2['results']['r_squared'], axis=1)
-    # r_squared_mean_max = np.max(data_r8c2['results']['r_squared'], axis=1)
-    # ax.plot(
-    #     time_cost_hr_avg, r_squared_mean_avg, '-', color=c_line[0],
-    #     label='Random')
-    # ax.fill_between(
-    #     time_cost_hr_avg,
-    #     r_squared_mean_min,
-    #     r_squared_mean_max,
-    #     color=c_env[0]
-    # )
-
-    time_cost_hr = data_r8c2['results']['n_trial'][:, 0] * f
-    r_squared_mean = data_r8c2['results']['r_squared'][:, 0]
+    time_cost_hr_avg = np.mean(data_r8c2['results']['n_trial'] * f, axis=1)
+    r_squared_mean_avg = np.mean(data_r8c2['results']['r_squared'], axis=1)
+    r_squared_mean_min = np.min(data_r8c2['results']['r_squared'], axis=1)
+    r_squared_mean_max = np.max(data_r8c2['results']['r_squared'], axis=1)
     ax.plot(
-        time_cost_hr, r_squared_mean, '-', color=c_line[0],
-        label='Random 1')
+        time_cost_hr_avg, r_squared_mean_avg, '-', color=c_line[0],
+        label='Random')
+    ax.fill_between(
+        time_cost_hr_avg,
+        r_squared_mean_min,
+        r_squared_mean_max,
+        color=c_env[0]
+    )
+
+    # time_cost_hr = data_r8c2['results']['n_trial'][:, 0] * f
+    # r_squared_mean = data_r8c2['results']['r_squared'][:, 0]
+    # ax.plot(
+    #     time_cost_hr, r_squared_mean, '-', color=c_line[0],
+    #     label='Random 2D')
 
     # time_cost_hr = data_r8c2['results']['n_trial'][:, 1] * f
     # r_squared_mean = data_r8c2['results']['r_squared'][:, 1]
@@ -79,14 +79,14 @@ def main(results_path):
     #     time_cost_hr, r_squared_mean, '-', color='r',
     #     label='Random 5')
 
-    n_round = len(data_a8c2['results']['n_trial'])
+    # n_round = len(data_a8c2['results']['n_trial'])
     # max_round_idx = n_round - 1
     # plot_idx = np.arange(0, n_round, 10)
     # plot_idx = np.hstack((plot_idx, np.array([max_round_idx])))
     # plot_idx = np.unique(plot_idx)
-    plot_idx = np.arange(0, n_round)
-    time_cost_hr = data_a8c2['results']['n_trial'][plot_idx] * f
-    r_squared_mean = data_a8c2['results']['r_squared'][plot_idx]
+    # plot_idx = np.arange(0, n_round)
+    time_cost_hr = data_a8c2['results']['n_trial'][:, 0] * f
+    r_squared_mean = data_a8c2['results']['r_squared'][:, 0]
     ax.plot(
         time_cost_hr, r_squared_mean, '-', color=c_line[1],
         label='Active 1')
@@ -178,7 +178,7 @@ def plot_exp2(results, fp_figure):
             bbox_inches="tight", dpi=100)
 
 if __name__ == "__main__":
-    # results_path = Path('/Users/bdroads/Projects/psiz-app/results')
+    results_path = Path('/Users/bdroads/Projects/psiz-app/results')
     # results_path = Path('/home/brett/packages/psiz-app/results')
-    results_path = Path('/home/brett/Projects/psiz-app.git/results')
+    # results_path = Path('/home/brett/Projects/psiz-app.git/results')
     main(results_path)

@@ -1,0 +1,482 @@
+Beat baseline.
+Round 0 (500 trials) | Loss: 1.91 | R^2: 0.10 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 3.53 m
+Active | Elapsed time: 1.56 m
+Round 1 (540 trials) | Loss: 2.15 | R^2: 0.15 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 3.71 m
+Active | Elapsed time: 1.52 m
+Round 2 (580 trials) | Loss: 2.22 | R^2: 0.19 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 3.77 m
+Active | Elapsed time: 1.52 m
+Round 3 (620 trials) | Loss: 2.31 | R^2: 0.21 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 3.91 m
+Active | Elapsed time: 1.52 m
+Round 4 (660 trials) | Loss: 2.38 | R^2: 0.23 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 3.98 m
+Active | Elapsed time: 1.52 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 5 (700 trials) | Loss: 2.45 | R^2: 0.23 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 4.06 m
+Active | Elapsed time: 1.52 m
+Round 6 (740 trials) | Loss: 2.46 | R^2: 0.25 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 4.21 m
+Active | Elapsed time: 1.52 m
+Round 7 (780 trials) | Loss: 2.49 | R^2: 0.27 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 4.29 m
+Active | Elapsed time: 1.52 m
+Round 8 (820 trials) | Loss: 2.52 | R^2: 0.29 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 4.41 m
+Active | Elapsed time: 1.52 m
+Round 9 (860 trials) | Loss: 2.55 | R^2: 0.31 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 4.49 m
+Active | Elapsed time: 1.52 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 10 (900 trials) | Loss: 2.61 | R^2: 0.33 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 4.62 m
+Active | Elapsed time: 1.52 m
+Round 11 (940 trials) | Loss: 2.60 | R^2: 0.33 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 4.71 m
+Active | Elapsed time: 1.52 m
+Round 12 (980 trials) | Loss: 2.60 | R^2: 0.35 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 4.84 m
+Active | Elapsed time: 1.52 m
+Round 13 (1020 trials) | Loss: 2.61 | R^2: 0.36 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 4.98 m
+Active | Elapsed time: 1.52 m
+Round 14 (1060 trials) | Loss: 2.62 | R^2: 0.39 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 4.61 m
+Active | Elapsed time: 1.52 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 15 (1100 trials) | Loss: 2.67 | R^2: 0.41 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 4.72 m
+Active | Elapsed time: 1.52 m
+Round 16 (1140 trials) | Loss: 2.63 | R^2: 0.43 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 4.84 m
+Active | Elapsed time: 1.52 m
+Round 17 (1180 trials) | Loss: 2.63 | R^2: 0.46 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 4.96 m
+Active | Elapsed time: 1.52 m
+Round 18 (1220 trials) | Loss: 2.64 | R^2: 0.48 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 5.09 m
+Active | Elapsed time: 1.52 m
+Round 19 (1260 trials) | Loss: 2.65 | R^2: 0.49 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 5.25 m
+Active | Elapsed time: 1.55 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 20 (1300 trials) | Loss: 2.69 | R^2: 0.52 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 5.31 m
+Active | Elapsed time: 1.53 m
+Round 21 (1340 trials) | Loss: 2.65 | R^2: 0.53 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 5.40 m
+Active | Elapsed time: 1.52 m
+Round 22 (1380 trials) | Loss: 2.65 | R^2: 0.56 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 5.51 m
+Active | Elapsed time: 1.53 m
+Round 23 (1420 trials) | Loss: 2.65 | R^2: 0.57 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 5.69 m
+Active | Elapsed time: 1.52 m
+Round 24 (1460 trials) | Loss: 2.66 | R^2: 0.59 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 5.77 m
+Active | Elapsed time: 1.55 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 25 (1500 trials) | Loss: 2.71 | R^2: 0.61 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 5.87 m
+Active | Elapsed time: 1.52 m
+Round 26 (1540 trials) | Loss: 2.68 | R^2: 0.62 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 5.94 m
+Active | Elapsed time: 1.52 m
+Round 27 (1580 trials) | Loss: 2.68 | R^2: 0.62 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 6.14 m
+Active | Elapsed time: 1.54 m
+Round 28 (1620 trials) | Loss: 2.69 | R^2: 0.63 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 6.34 m
+Active | Elapsed time: 1.63 m
+Round 29 (1660 trials) | Loss: 2.70 | R^2: 0.64 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 6.43 m
+Active | Elapsed time: 1.64 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 30 (1700 trials) | Loss: 2.76 | R^2: 0.67 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 6.57 m
+Active | Elapsed time: 1.63 m
+Round 31 (1740 trials) | Loss: 2.71 | R^2: 0.67 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 6.84 m
+Active | Elapsed time: 1.51 m
+Round 32 (1780 trials) | Loss: 2.72 | R^2: 0.69 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 6.69 m
+Active | Elapsed time: 1.53 m
+Round 33 (1820 trials) | Loss: 2.73 | R^2: 0.68 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 6.73 m
+Active | Elapsed time: 1.53 m
+Round 34 (1860 trials) | Loss: 2.74 | R^2: 0.69 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 6.79 m
+Active | Elapsed time: 1.53 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 35 (1900 trials) | Loss: 2.81 | R^2: 0.70 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 6.85 m
+Active | Elapsed time: 1.53 m
+Round 36 (1940 trials) | Loss: 2.77 | R^2: 0.70 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 7.05 m
+Active | Elapsed time: 1.53 m
+Round 37 (1980 trials) | Loss: 2.77 | R^2: 0.72 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 7.06 m
+Active | Elapsed time: 1.56 m
+Round 38 (2020 trials) | Loss: 2.78 | R^2: 0.74 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 7.27 m
+Active | Elapsed time: 1.53 m
+Round 39 (2060 trials) | Loss: 2.78 | R^2: 0.73 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0
+Posterior | Elapsed time: 7.32 m
+Active | Elapsed time: 1.53 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Beat baseline.
+Round 40 (2100 trials) | Loss: 2.84 | R^2: 0.73 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0005
+Posterior | Elapsed time: 7.41 m
+Active | Elapsed time: 1.53 m
+Round 41 (2140 trials) | Loss: 2.78 | R^2: 0.75 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0005
+Posterior | Elapsed time: 7.55 m
+Active | Elapsed time: 1.51 m
+Round 42 (2180 trials) | Loss: 2.79 | R^2: 0.76 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0005
+Posterior | Elapsed time: 7.61 m
+Active | Elapsed time: 1.53 m
+Round 43 (2220 trials) | Loss: 2.79 | R^2: 0.77 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0005
+Posterior | Elapsed time: 7.71 m
+Active | Elapsed time: 1.53 m
+Round 44 (2260 trials) | Loss: 2.80 | R^2: 0.76 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0005
+Posterior | Elapsed time: 7.78 m
+Active | Elapsed time: 1.53 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Beat baseline.
+Round 45 (2300 trials) | Loss: 2.86 | R^2: 0.77 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 7.90 m
+Active | Elapsed time: 1.53 m
+Round 46 (2340 trials) | Loss: 2.81 | R^2: 0.78 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 8.04 m
+Active | Elapsed time: 1.52 m
+Round 47 (2380 trials) | Loss: 2.81 | R^2: 0.78 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 8.14 m
+Active | Elapsed time: 1.53 m
+Round 48 (2420 trials) | Loss: 2.82 | R^2: 0.78 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 8.24 m
+Active | Elapsed time: 1.53 m
+Round 49 (2460 trials) | Loss: 2.83 | R^2: 0.78 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 8.36 m
+Active | Elapsed time: 1.51 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 50 (2500 trials) | Loss: 2.89 | R^2: 0.78 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 8.40 m
+Active | Elapsed time: 1.52 m
+Round 51 (2540 trials) | Loss: 2.84 | R^2: 0.79 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 8.52 m
+Active | Elapsed time: 1.53 m
+Round 52 (2580 trials) | Loss: 2.84 | R^2: 0.79 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 8.59 m
+Active | Elapsed time: 1.53 m
+Round 53 (2620 trials) | Loss: 2.84 | R^2: 0.80 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 8.74 m
+Active | Elapsed time: 1.53 m
+Round 54 (2660 trials) | Loss: 2.85 | R^2: 0.80 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 8.85 m
+Active | Elapsed time: 1.53 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 55 (2700 trials) | Loss: 2.91 | R^2: 0.80 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 8.95 m
+Active | Elapsed time: 1.53 m
+Round 56 (2740 trials) | Loss: 2.85 | R^2: 0.81 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 9.08 m
+Active | Elapsed time: 1.51 m
+Round 57 (2780 trials) | Loss: 2.86 | R^2: 0.81 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 9.14 m
+Active | Elapsed time: 1.53 m
+Round 58 (2820 trials) | Loss: 2.86 | R^2: 0.81 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 9.23 m
+Active | Elapsed time: 1.53 m
+Round 59 (2860 trials) | Loss: 2.87 | R^2: 0.81 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 9.37 m
+Active | Elapsed time: 1.53 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 60 (2900 trials) | Loss: 2.93 | R^2: 0.81 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 9.46 m
+Active | Elapsed time: 1.52 m
+Round 61 (2940 trials) | Loss: 2.87 | R^2: 0.81 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 9.56 m
+Active | Elapsed time: 1.53 m
+Round 62 (2980 trials) | Loss: 2.88 | R^2: 0.82 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 9.66 m
+Active | Elapsed time: 1.53 m
+Round 63 (3020 trials) | Loss: 2.88 | R^2: 0.81 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 9.75 m
+Active | Elapsed time: 1.52 m
+Round 64 (3060 trials) | Loss: 2.89 | R^2: 0.81 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 9.87 m
+Active | Elapsed time: 1.53 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 65 (3100 trials) | Loss: 2.96 | R^2: 0.82 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 9.92 m
+Active | Elapsed time: 1.53 m
+Round 66 (3140 trials) | Loss: 2.90 | R^2: 0.83 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 10.04 m
+Active | Elapsed time: 1.53 m
+Round 67 (3180 trials) | Loss: 2.90 | R^2: 0.82 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 10.14 m
+Active | Elapsed time: 1.53 m
+Round 68 (3220 trials) | Loss: 2.90 | R^2: 0.81 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 10.24 m
+Active | Elapsed time: 1.53 m
+Round 69 (3260 trials) | Loss: 2.91 | R^2: 0.82 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 10.40 m
+Active | Elapsed time: 1.53 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 70 (3300 trials) | Loss: 2.98 | R^2: 0.82 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 10.46 m
+Active | Elapsed time: 1.53 m
+Round 71 (3340 trials) | Loss: 2.92 | R^2: 0.83 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 10.63 m
+Active | Elapsed time: 1.53 m
+Round 72 (3380 trials) | Loss: 2.92 | R^2: 0.82 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 10.69 m
+Active | Elapsed time: 1.53 m
+Round 73 (3420 trials) | Loss: 2.93 | R^2: 0.83 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 10.80 m
+Active | Elapsed time: 1.51 m
+Round 74 (3460 trials) | Loss: 2.93 | R^2: 0.84 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 10.91 m
+Active | Elapsed time: 1.52 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 75 (3500 trials) | Loss: 3.01 | R^2: 0.84 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 11.02 m
+Active | Elapsed time: 1.53 m
+Round 76 (3540 trials) | Loss: 2.94 | R^2: 0.85 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 11.05 m
+Active | Elapsed time: 1.53 m
+Round 77 (3580 trials) | Loss: 2.94 | R^2: 0.84 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 11.20 m
+Active | Elapsed time: 1.53 m
+Round 78 (3620 trials) | Loss: 2.95 | R^2: 0.84 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 11.27 m
+Active | Elapsed time: 1.51 m
+Round 79 (3660 trials) | Loss: 2.95 | R^2: 0.85 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 11.45 m
+Active | Elapsed time: 1.52 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 80 (3700 trials) | Loss: 3.02 | R^2: 0.84 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 11.55 m
+Active | Elapsed time: 1.51 m
+Round 81 (3740 trials) | Loss: 2.96 | R^2: 0.84 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 11.64 m
+Active | Elapsed time: 1.51 m
+Round 82 (3780 trials) | Loss: 2.96 | R^2: 0.85 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 11.72 m
+Active | Elapsed time: 1.52 m
+Round 83 (3820 trials) | Loss: 2.96 | R^2: 0.84 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 11.87 m
+Active | Elapsed time: 1.52 m
+Round 84 (3860 trials) | Loss: 2.97 | R^2: 0.85 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 12.00 m
+Active | Elapsed time: 1.52 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 85 (3900 trials) | Loss: 3.05 | R^2: 0.85 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 12.15 m
+Active | Elapsed time: 1.51 m
+Round 86 (3940 trials) | Loss: 2.98 | R^2: 0.85 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 12.13 m
+Active | Elapsed time: 1.53 m
+Round 87 (3980 trials) | Loss: 2.98 | R^2: 0.85 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 12.16 m
+Active | Elapsed time: 1.53 m
+Round 88 (4020 trials) | Loss: 2.99 | R^2: 0.85 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 12.38 m
+Active | Elapsed time: 1.52 m
+Round 89 (4060 trials) | Loss: 2.99 | R^2: 0.85 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 12.47 m
+Active | Elapsed time: 1.51 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 90 (4100 trials) | Loss: 3.06 | R^2: 0.85 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 12.70 m
+Active | Elapsed time: 1.51 m
+Round 91 (4140 trials) | Loss: 2.99 | R^2: 0.85 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 12.79 m
+Active | Elapsed time: 1.53 m
+Round 92 (4180 trials) | Loss: 3.00 | R^2: 0.86 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 12.87 m
+Active | Elapsed time: 1.53 m
+Round 93 (4220 trials) | Loss: 3.00 | R^2: 0.86 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 12.91 m
+Active | Elapsed time: 1.52 m
+Round 94 (4260 trials) | Loss: 3.00 | R^2: 0.86 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 13.14 m
+Active | Elapsed time: 1.51 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 95 (4300 trials) | Loss: 3.08 | R^2: 0.86 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 13.21 m
+Active | Elapsed time: 1.51 m
+Round 96 (4340 trials) | Loss: 3.01 | R^2: 0.86 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 13.38 m
+Active | Elapsed time: 1.51 m
+Round 97 (4380 trials) | Loss: 3.01 | R^2: 0.86 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 13.52 m
+Active | Elapsed time: 1.51 m
+Round 98 (4420 trials) | Loss: 3.01 | R^2: 0.86 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 13.62 m
+Active | Elapsed time: 1.51 m
+Round 99 (4460 trials) | Loss: 3.02 | R^2: 0.87 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 13.74 m
+Active | Elapsed time: 1.51 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 100 (4500 trials) | Loss: 3.10 | R^2: 0.87 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 13.79 m
+Active | Elapsed time: 1.52 m
+Round 101 (4540 trials) | Loss: 3.03 | R^2: 0.87 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 13.97 m
+Active | Elapsed time: 1.51 m
+Round 102 (4580 trials) | Loss: 3.03 | R^2: 0.87 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 14.06 m
+Active | Elapsed time: 1.51 m
+Round 103 (4620 trials) | Loss: 3.03 | R^2: 0.87 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 14.23 m
+Active | Elapsed time: 1.52 m
+Round 104 (4660 trials) | Loss: 3.03 | R^2: 0.87 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 14.31 m
+Active | Elapsed time: 1.52 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 105 (4700 trials) | Loss: 3.11 | R^2: 0.88 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 14.42 m
+Active | Elapsed time: 1.52 m
+Round 106 (4740 trials) | Loss: 3.04 | R^2: 0.88 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 14.56 m
+Active | Elapsed time: 1.51 m
+Round 107 (4780 trials) | Loss: 3.04 | R^2: 0.88 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 14.66 m
+Active | Elapsed time: 1.51 m
+Round 108 (4820 trials) | Loss: 3.04 | R^2: 0.88 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 14.75 m
+Active | Elapsed time: 1.52 m
+Round 109 (4860 trials) | Loss: 3.05 | R^2: 0.88 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 14.89 m
+Active | Elapsed time: 1.53 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 110 (4900 trials) | Loss: 3.12 | R^2: 0.88 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 14.91 m
+Active | Elapsed time: 1.56 m
+Round 111 (4940 trials) | Loss: 3.05 | R^2: 0.89 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 15.73 m
+Active | Elapsed time: 1.57 m
+Round 112 (4980 trials) | Loss: 3.06 | R^2: 0.89 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 15.70 m
+Active | Elapsed time: 1.53 m
+Round 113 (5020 trials) | Loss: 3.06 | R^2: 0.89 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 15.64 m
+Active | Elapsed time: 1.53 m
+Round 114 (5060 trials) | Loss: 3.06 | R^2: 0.89 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 15.87 m
+Active | Elapsed time: 1.54 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 115 (5100 trials) | Loss: 3.14 | R^2: 0.89 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 15.80 m
+Active | Elapsed time: 1.53 m
+Round 116 (5140 trials) | Loss: 3.06 | R^2: 0.89 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 16.04 m
+Active | Elapsed time: 1.54 m
+Round 117 (5180 trials) | Loss: 3.07 | R^2: 0.89 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 16.24 m
+Active | Elapsed time: 1.53 m
+Round 118 (5220 trials) | Loss: 3.07 | R^2: 0.89 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 16.12 m
+Active | Elapsed time: 1.52 m
+Round 119 (5260 trials) | Loss: 3.07 | R^2: 0.89 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 16.36 m
+Active | Elapsed time: 1.53 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 120 (5300 trials) | Loss: 3.15 | R^2: 0.89 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 16.42 m
+Active | Elapsed time: 1.57 m
+Round 121 (5340 trials) | Loss: 3.08 | R^2: 0.89 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 16.71 m
+Active | Elapsed time: 1.53 m
+Round 122 (5380 trials) | Loss: 3.08 | R^2: 0.90 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 16.74 m
+Active | Elapsed time: 1.52 m
+Round 123 (5420 trials) | Loss: 3.08 | R^2: 0.89 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 17.02 m
+Active | Elapsed time: 1.52 m
+Round 124 (5460 trials) | Loss: 3.09 | R^2: 0.89 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 17.11 m
+Active | Elapsed time: 1.57 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 125 (5500 trials) | Loss: 3.16 | R^2: 0.90 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 19.03 m
+Active | Elapsed time: 1.75 m
+Round 126 (5540 trials) | Loss: 3.09 | R^2: 0.89 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 18.18 m
+Active | Elapsed time: 1.73 m
+Round 127 (5580 trials) | Loss: 3.09 | R^2: 0.90 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 18.52 m
+Active | Elapsed time: 1.56 m
+Round 128 (5620 trials) | Loss: 3.09 | R^2: 0.90 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 18.78 m
+Active | Elapsed time: 1.54 m
+Round 129 (5660 trials) | Loss: 3.09 | R^2: 0.90 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 19.44 m
+Active | Elapsed time: 1.59 m
+/home/brett/miniconda/envs/psiz/lib/python3.6/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+Did not beat baseline.
+Round 130 (5700 trials) | Loss: 3.17 | R^2: 0.90 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 20.45 m
+Active | Elapsed time: 1.61 m
+Round 131 (5740 trials) | Loss: 3.10 | R^2: 0.90 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 21.06 m
+Active | Elapsed time: 1.63 m
+Round 132 (5780 trials) | Loss: 3.10 | R^2: 0.90 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 19.24 m
+Active | Elapsed time: 1.57 m
+Round 133 (5820 trials) | Loss: 3.10 | R^2: 0.90 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006
+Posterior | Elapsed time: 20.53 m
+Active | Elapsed time: 1.55 m
+Round 134 (5860 trials) | Loss: 3.10 | R^2: 0.90 | rho: 2.0 | tau: 1.0 | beta: 5.5 | gamma: 0.0006

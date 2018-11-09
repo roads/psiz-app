@@ -122,8 +122,8 @@ def run_exp_2(domain, fp_exp0_domain, fp_exp2_domain):
     """Run Experiment 2."""
     # Settings.
     freeze_options = {'theta': {'rho': 2., 'tau': 1.}}
-    # seed_list = [913, 192, 785, 891, 841]  # TODO
-    seed_list = [192, 785, 891, 841]
+    # seed_list = [913, 192, 785, 891, 841]
+    seed_list = [841]
 
     # TODO Derive from observations data.
     time_s_2c1 = 3.06
@@ -138,8 +138,8 @@ def run_exp_2(domain, fp_exp0_domain, fp_exp2_domain):
         'n_reference': 2,
         'n_select': 1,
         'n_trial_initial': 500,
-        'n_trial_total': 180500,
-        'n_trial_per_round': 6000,
+        'n_trial_total': 150500,
+        'n_trial_per_round': 5000,
         'time_s_per_trial': time_s_2c1
     }
     cond_info_r8c2 = {
@@ -171,14 +171,14 @@ def run_exp_2(domain, fp_exp0_domain, fp_exp2_domain):
     fp_emb_true = fp_exp0_domain / Path('emb_true.hdf5')
     emb_true = load_embedding(fp_emb_true)
 
-    # simulate_multiple_runs(
-    #     seed_list, emb_true, cond_info_r2c1, freeze_options, fp_exp2_domain)
+    simulate_multiple_runs(
+        seed_list, emb_true, cond_info_r2c1, freeze_options, fp_exp2_domain)
 
     # simulate_multiple_runs(
     #     seed_list, emb_true, cond_info_r8c2, freeze_options, fp_exp2_domain)
 
-    simulate_multiple_runs(
-        seed_list, emb_true, cond_info_a8c2, freeze_options, fp_exp2_domain)
+    # simulate_multiple_runs(
+    #     seed_list, emb_true, cond_info_a8c2, freeze_options, fp_exp2_domain)
 
 
 def simulate_multiple_runs(
@@ -245,6 +245,8 @@ def simulate_run_random(
     """
     # Define filepaths.
     fp_data_run = fp_exp_domain / Path('{0:s}_{1:s}_data.p'.format(cond_info['prefix'], run_id))
+    fp_obs = fp_exp_domain / Path('{0:s}_{1:s}_obs.hdf5'.format(cond_info['prefix'], run_id))
+    fp_emb_inf = fp_exp_domain / Path('{0:s}_{1:s}_emb_inf.hdf5'.format(cond_info['prefix'], run_id))
 
     # Define agent based on true embedding.
     agent = Agent(emb_true)
@@ -270,6 +272,7 @@ def simulate_run_random(
     n_round = len(n_trial)
     r_squared = np.empty((n_round))
     loss = np.empty((n_round))
+    is_valid = np.zeros((n_round), dtype=bool)
 
     # Initialize embedding.
     emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
@@ -279,12 +282,13 @@ def simulate_run_random(
         init_mode = 'cold'
         include_idx = np.arange(0, n_trial[i_round])
         loss[i_round] = emb_inferred.fit(
-            obs.subset(include_idx), n_restart=100, init_mode=init_mode)
+            obs.subset(include_idx), n_restart=50, init_mode=init_mode)
         # Compare the inferred model with ground truth by comparing the
         # similarity matrices implied by each model.
         simmat_infer = similarity_matrix(
             emb_inferred.similarity, emb_inferred.z['value'])
         r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
+        is_valid[i_round] = True
         print(
             'Round {0} ({1:d} trials) | Loss: {2:.2f} | R^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
                 i_round, int(n_trial[i_round]), loss[i_round],
@@ -298,15 +302,19 @@ def simulate_run_random(
         results_temp = {
             'n_trial': np.expand_dims(n_trial[0:i_round + 1], axis=1),
             'loss': np.expand_dims(loss[0:i_round + 1], axis=1),
-            'r_squared': np.expand_dims(r_squared[0:i_round + 1], axis=1)
+            'r_squared': np.expand_dims(r_squared[0:i_round + 1], axis=1),
+            'is_valid': np.expand_dims(is_valid[0:i_round + 1], axis=1)
         }
         data = {'info': cond_info, 'results': results_temp}
         pickle.dump(data, open(fp_data_run.absolute().as_posix(), 'wb'))
+        obs.save(fp_obs)
+        emb_inferred.save(fp_emb_inf)
 
     results = {
         'n_trial': np.expand_dims(n_trial, axis=1),
         'loss': np.expand_dims(loss, axis=1),
-        'r_squared': np.expand_dims(r_squared, axis=1)
+        'r_squared': np.expand_dims(r_squared, axis=1),
+        'is_valid': np.expand_dims(is_valid, axis=1)
     }
     return results
 

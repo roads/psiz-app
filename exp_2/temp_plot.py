@@ -12,34 +12,19 @@ import matplotlib.pyplot as plt
 import pickle
 
 def main(results_path):
-    # fp_data_r2c1 = results_path / Path('exp_2/birds/r2c1_data.p')
-    fp_data_r2c1 = results_path / Path('old/r2c1_data.p')
+    fp_data_r2c1 = results_path / Path('exp_2/birds/r2c1_data.p')
     fp_data_r8c2 = results_path / Path('exp_2/birds/r8c2_data.p')
     fp_data_a8c2_r1 = results_path / Path('exp_2/a8c2_data_temp.p')
-    fp_data_a8c2_r2 = results_path / Path('exp_2/birds/a8c2_data_temp.p')
+    fp_data_a8c2 = results_path / Path('exp_2/birds/a8c2_data.p')
     fp_figure_exp2b = results_path / Path('exp_2/exp2b.pdf')
-
-    
     data_r2c1 = pickle.load(open(fp_data_r2c1, 'rb'))
     data_r8c2 = pickle.load(open(fp_data_r8c2, 'rb'))
-    data_a8c2 = pickle.load(open(fp_data_a8c2_r1, 'rb'))
-    data_a8c2_r2 = pickle.load(open(fp_data_a8c2_r2, 'rb'))
+    data_a8c2_r1 = pickle.load(open(fp_data_a8c2_r1, 'rb'))
+    data_a8c2 = pickle.load(open(fp_data_a8c2, 'rb'))
 
     results = data_a8c2['results']
-    results_new = data_a8c2_r2['results']
-    for key in results:
-        n_entry = results[key].shape[0]
-        n_run_old = results[key].shape[1]
-        n_entry_new = results_new[key].shape[0]
-        if n_entry > n_entry_new:
-            filler = np.zeros([n_entry - n_entry_new, 1], dtype=results_new[key].dtype)
-            results_new[key] = np.concatenate((results_new[key], filler), axis=0)
-        elif n_entry_new > n_entry:
-            filler = np.zeros([n_entry_new - n_entry, n_run_old], dtype=results_new[key].dtype)
-            results[key] = np.concatenate((results[key], filler), axis=0)
-        results[key] = np.concatenate(
-            (results[key], results_new[key]), axis=1
-        )
+    results_r1 = data_a8c2_r1['results']
+    results = add_temp_results(results, results_r1)
 
     # Standard.
     rgb1 = np.array((0.0, 0.0, 0.5312, 1.0))
@@ -90,11 +75,14 @@ def main(results_path):
     #     time_cost_hr, r_squared_mean, '-', color=c_line[i_cond],
     #     label='Active 1')
     
-    # time_cost_hr = data_a8c2_r2['results']['n_trial'][:, 0] * f
-    # r_squared_mean = data_a8c2_r2['results']['r_squared'][:, 0]
+    # f = data_a8c2_r5['info']['time_s_per_trial'] / (60 * 60)
+    # time_cost_hr = data_a8c2_r5['results']['n_trial'][:, 0] * f
+    # r_squared_mean = data_a8c2_r5['results']['r_squared'][:, 0]
+    # time_cost_hr = time_cost_hr[0:-108]
+    # r_squared_mean = r_squared_mean[0:-108]
     # ax.plot(
-    #     time_cost_hr, r_squared_mean, '-', color=c_env[i_cond],
-    #     label='Active 2')
+    #     time_cost_hr, r_squared_mean, '-', color=c_line[i_cond],
+    #     label='Active 5')
 
     ax.set_ylim(bottom=0., top=1.)
     ax.set_xlabel('Total Worker Hours')
@@ -105,6 +93,23 @@ def main(results_path):
     plt.savefig(
         fp_figure_exp2b.absolute().as_posix(), format='pdf',
         bbox_inches="tight", dpi=100)
+
+
+def add_temp_results(results, results_new):
+    for key in results:
+        n_entry = results[key].shape[0]
+        n_run_old = results[key].shape[1]
+        n_entry_new = results_new[key].shape[0]
+        if n_entry > n_entry_new:
+            filler = np.zeros([n_entry - n_entry_new, 1], dtype=results_new[key].dtype)
+            results_new[key] = np.concatenate((results_new[key], filler), axis=0)
+        elif n_entry_new > n_entry:
+            filler = np.zeros([n_entry_new - n_entry, n_run_old], dtype=results_new[key].dtype)
+            results[key] = np.concatenate((results[key], filler), axis=0)
+        results[key] = np.concatenate(
+            (results[key], results_new[key]), axis=1
+        )
+    return results
 
 
 def plot_condition(ax, data, c_line, c_env, c_scatter, fontdict, rsquared_crit=.9):

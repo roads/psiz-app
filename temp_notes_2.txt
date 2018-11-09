@@ -1,5 +1,0 @@
-Round 0 | R^2 0.73
-Round 0 | R^2 0.77
-Round 0 | R^2 0.79
-
-Round 0 | R^2 0.77

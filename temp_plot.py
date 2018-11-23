@@ -11,20 +11,22 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pickle
 
-def main(results_path):
-    fp_data_r2c1 = results_path / Path('exp_2/birds/r2c1_data.p')
-    fp_data_r8c2 = results_path / Path('exp_2/birds/r8c2_data.p')
-    fp_data_a8c2_r1 = results_path / Path('exp_2/a8c2_data_temp.p')
-    fp_data_a8c2 = results_path / Path('exp_2/birds/a8c2_data.p')
-    fp_figure_exp2b = results_path / Path('exp_2/exp2b.pdf')
+def main(fp_results):
+    fp_data_r2c1 = fp_results / Path('exp_2/birds/r2c1/r2c1_data.p')
+    fp_data_r8c2 = fp_results / Path('exp_2/birds/r8c2/r8c2_data.p')
+    # fp_data_a8c2_r1 = fp_results / Path('exp_2/a8c2_data_temp.p')
+    fp_data_a8c2 = fp_results / Path('exp_2/birds/a8c2/a8c2_data.p')
+    fp_figure_exp2b = fp_results / Path('exp_2/exp2.pdf')
     data_r2c1 = pickle.load(open(fp_data_r2c1, 'rb'))
     data_r8c2 = pickle.load(open(fp_data_r8c2, 'rb'))
-    data_a8c2_r1 = pickle.load(open(fp_data_a8c2_r1, 'rb'))
+    # data_a8c2_r1 = pickle.load(open(fp_data_a8c2_r1, 'rb'))
     data_a8c2 = pickle.load(open(fp_data_a8c2, 'rb'))
 
-    results = data_a8c2['results']
-    results_r1 = data_a8c2_r1['results']
-    results = add_temp_results(results, results_r1)
+    # results = data_a8c2['results']
+    # results_r1 = data_a8c2_r1['results']
+    # results = add_temp_results(results, results_r1)
+    # fp_data_a8c2 = fp_results / Path('exp_2/birds/a8c2/a8c2_data_new.p')
+    # pickle.dump(data_a8c2, open(fp_data_a8c2, 'wb'))
 
     # Standard.
     rgb1 = np.array((0.0, 0.0, 0.5312, 1.0))
@@ -56,7 +58,6 @@ def main(results_path):
         'horizontalalignment': 'left'
     }
 
-    # plot_exp2((data_r8c2, data_a8c2), fp_figure_exp2b)
     fig, ax = plt.subplots(1, 1, figsize=(6, 4))
 
     i_cond = 2
@@ -107,7 +108,7 @@ def add_temp_results(results, results_new):
             filler = np.zeros([n_entry_new - n_entry, n_run_old], dtype=results_new[key].dtype)
             results[key] = np.concatenate((results[key], filler), axis=0)
         results[key] = np.concatenate(
-            (results[key], results_new[key]), axis=1
+            (results_new[key], results[key]), axis=1
         )
     return results
 
@@ -174,84 +175,8 @@ def plot_condition(ax, data, c_line, c_env, c_scatter, fontdict, rsquared_crit=.
             fontdict=fontdict)
 
 
-def plot_exp2(results, fp_figure):
-    """Visualize results of experiment."""
-    fontdict = {
-        'fontsize': 10,
-        'verticalalignment': 'top',
-        'horizontalalignment': 'left'
-    }
-
-    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
-
-    rgb1 = np.array((0.0, 0.0, 0.5312, 1.0))
-    # rgb2 = np.array((1.0, 0.8125, 0.0, 1.0))
-    rgb3 = np.array((0.5, 0.0, 0.0, 1.0))
-    # Lighter version.
-    color_scale = .4  # Lower scale yeilds lighter colors.
-    rgb1_light = 1 - (color_scale * (1 - rgb1))
-    # rgb2_light = 1 - (color_scale * (1 - rgb2))
-    rgb3_light = 1 - (color_scale * (1 - rgb3))
-
-    c_line = [tuple(rgb1), tuple(rgb3)]
-    c_env = [tuple(rgb1_light), tuple(rgb3_light)]
-    c_scatter = [
-        np.expand_dims(rgb1, axis=0),
-        np.expand_dims(rgb3, axis=0)
-    ]
-
-    # Compute statistics across runs for each condition (on the fly).
-    for i_cond, condition in enumerate(results):
-        name = condition['info']['name']
-        time_cost_hr = (
-            condition['info']['time_s_per_trial'] *
-            np.mean(condition['results']['n_trial'], axis=1) /
-            3600
-        )
-        # loss = np.mean(condition['loss'], axis=1)
-        r_squared = condition['results']['r_squared']
-        r_squared_mean = np.mean(r_squared, axis=1)
-        r_squared_sem = sem(r_squared, axis=1)
-
-        ax.plot(
-            time_cost_hr, r_squared_mean, '-', color=c_line[i_cond],
-            label=name)
-        # ax.fill_between(
-        #     time_cost_hr,
-        #     r_squared_mean - r_squared_sem,
-        #     r_squared_mean + r_squared_sem,
-        #     color=c_env[i_cond]
-        # )
-        # Add text at .9 R^2 breakpoint.
-        # locs = np.greater_equal(r_squared_mean, .9)
-        # if np.sum(locs) > 0:
-        #     time_thresh = time_cost_hr[locs]
-        #     time_thresh = time_thresh[0]
-        #     r2_thresh = r_squared_mean[locs]
-        #     r2_thresh = r2_thresh[0]
-        #     ax.scatter(
-        #         time_thresh, r2_thresh, marker='d', color=c_scatter[i_cond],
-        #         edgecolors='k')
-        #     ax.text(
-        #         time_thresh, r2_thresh + .06, "{0:.1f} hr".format(time_thresh),
-        #         fontdict=fontdict)
-
-    ax.set_ylim(bottom=0., top=1.)
-    ax.set_xlabel('Total Worker Hours')
-    ax.set_ylabel(r'$R^2$ Similarity')
-    ax.legend()
-    plt.tight_layout()
-
-    if fp_figure is None:
-        plt.show()
-    else:
-        plt.savefig(
-            fp_figure.absolute().as_posix(), format='pdf',
-            bbox_inches="tight", dpi=100)
-
-
 if __name__ == "__main__":
-    # results_path = Path('/Users/bdroads/Projects/psiz-app/results')
-    # results_path = Path('/home/brett/packages/psiz-app/results')
-    results_path = Path('/home/brett/Projects/psiz-app.git/results')
-    main(results_path)
+    # fp_results = Path('/Users/bdroads/Projects/psiz-app/results')
+    # fp_results = Path('/home/brett/packages/psiz-app/results')
+    fp_results = Path('/home/brett/Projects/psiz-app.git/results')
+    main(fp_results)

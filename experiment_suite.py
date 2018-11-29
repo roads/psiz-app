@@ -74,12 +74,12 @@ def main(fp_results):
         # run_exp_1(domain, fp_exp0_domain, fp_exp1_domain)
         # run_exp_2(domain, fp_exp0_domain, fp_exp2_domain)
         run_exp_3(domain, fp_exp0_domain, fp_exp3_domain)
-    
+
     # Visualize Experiment 1 Results.
     # fp_cv = fp_results / Path('exp_1/{0:s}'.format(domain))
     # fp_figure_exp1 = fp_results / Path('exp_1/{0:s}/exp1.pdf'.format(domain))
     # visualize_exp_1(fp_cv, fp_figure_exp1)
-    
+
     # Visualize Experiment 2 Results.
     # Define filepaths.
     # fp_data_r2c1 = fp_results / Path('exp_2/{0:s}/r2c1/r2c1_data.p'.format(domain))
@@ -251,11 +251,16 @@ def run_exp_2(domain, fp_exp0_domain, fp_exp2_domain):
 
 def run_exp_3(domain, fp_exp0_domain, fp_exp3_domain):
     """Run Experiment 2.
-    
+
     Random 8-choose-2 novices
     Random 8-choose-2 experts
     Active 8-choose-2 experts
 
+    Generate all random novice data
+    Generate all random expert data
+
+    Infer joint embedding with all random novice + incremental random expert
+    Infer joint embedding with all random novice + incremental active expert
     """
     # Settings.
     n_stimuli = 100
@@ -263,9 +268,6 @@ def run_exp_3(domain, fp_exp0_domain, fp_exp3_domain):
     n_group = 2
     freeze_options = {'theta': {'rho': 2., 'tau': 1.}}
     seed_list = [913, 192, 785, 891, 841]
-    # TODO Derive from observations data.
-    time_s_2c1 = 3.06
-    time_s_8c2 = 8.98
 
     # Define experiment conditions.
     cond_info_r8c2 = {
@@ -275,23 +277,9 @@ def run_exp_3(domain, fp_exp0_domain, fp_exp3_domain):
         'selection_policy': 'random',
         'n_reference': 8,
         'n_select': 2,
-        'n_trial_initial': 500,
-        'n_trial_total': 15000,
-        'n_trial_per_round': 500,
-        'time_s_per_trial': time_s_8c2
-    }
-
-    cond_info_r8c2 = {
-        'name': 'Random 8-choose-2',
-        'prefix': 'r8c2',
-        'domain': domain,
-        'selection_policy': 'random',
-        'n_reference': 8,
-        'n_select': 2,
-        'n_trial_initial': 500,
-        'n_trial_total': 15000,
-        'n_trial_per_round': 500,
-        'time_s_per_trial': time_s_8c2
+        'n_trial_initial': 10,
+        'n_trial_total': 6010,
+        'n_trial_per_round': 250,
     }
 
     cond_info_a8c2 = {
@@ -304,7 +292,6 @@ def run_exp_3(domain, fp_exp0_domain, fp_exp3_domain):
         'n_trial_initial': 500,
         'n_trial_total': 10000,
         'n_trial_per_round': 40,
-        'time_s_per_trial': time_s_8c2,
         'n_query': 40,
     }
 
@@ -313,71 +300,23 @@ def run_exp_3(domain, fp_exp0_domain, fp_exp3_domain):
     # emb_true = load_embedding(fp_emb_true)
 
     # Generate a random docket of trials to show each group.
-    n_trial = 5000
-    n_reference = 8
-    n_select = 2
-    generator = RandomGenerator(n_reference, n_select)
-    docket = generator.generate(n_trial, n_stimuli)
+    generator = RandomGenerator(
+        cond_info_r8c2['n_reference'],
+        cond_info_r8c2['n_select'])
+    docket = generator.generate(
+        cond_info_r8c2['n_trial_total'], emb_true.n_stimuli
+    )
 
-    # Simulate similarity judgments for the three groups.
+    # Simulate novice similarity judgments.
     agent_novice = Agent(emb_true, group_id=0)
-    agent_expert = Agent(emb_true, group_id=1)
     obs_novice = agent_novice.simulate(docket)
-    obs_expert = agent_expert.simulate(docket)
-    obs_all = trials.stack((obs_novice, obs_expert))
 
-    model_inferred = Exponential(
-        emb_true.n_stimuli, n_dim, n_group)
-    model_inferred.freeze(freeze_options=freeze_options)
-    model_inferred.fit(obs_all, 50, verbose=1)
-
-    # Compare the inferred model with ground truth by comparing the
-    # similarity matrices implied by each model.
-    def truth_sim_func0(z_q, z_ref):
-        return emb_true.similarity(z_q, z_ref, group_id=0)
-
-    def truth_sim_func1(z_q, z_ref):
-        return emb_true.similarity(z_q, z_ref, group_id=1)
-
-    simmat_truth = (
-        similarity_matrix(truth_sim_func0, emb_true.z['value']),
-        similarity_matrix(truth_sim_func1, emb_true.z['value']),
+    # TODO for loop
+    run_id = str(seed_list[0])
+    results = simulate_run_random_exp3(
+        emb_true, cond_info_r8c2, freeze_options, fp_exp3_domain, run_id,
+        obs_novice
     )
-
-    def infer_sim_func0(z_q, z_ref):
-        return model_inferred.similarity(z_q, z_ref, group_id=0)
-
-    def infer_sim_func1(z_q, z_ref):
-        return model_inferred.similarity(z_q, z_ref, group_id=1)
-
-    simmat_infer = (
-        similarity_matrix(infer_sim_func0, model_inferred.z['value']),
-        similarity_matrix(infer_sim_func1, model_inferred.z['value']),
-    )
-    r_squared = np.empty((n_group, n_group))
-    for i_truth in range(n_group):
-        for j_infer in range(n_group):
-            r_squared[i_truth, j_infer] = matrix_comparison(
-                simmat_truth[i_truth], simmat_infer[j_infer],
-                score='r2'
-            )
-
-    # Display comparison results. A good infferred model will have a high
-    # R^2 value on the diagonal elements (max is 1) and relatively low R^2
-    # values on the off-diagonal elements.
-    print('\n    Model Comparison (R^2)')
-    print('    ================================')
-    print('      True  |        Inferred')
-    print('            | Novice  Expert')
-    print('    --------+-----------------------')
-    print('     Novice | {0: >6.2f}  {1: >6.2f}'.format(
-        r_squared[0, 0], r_squared[0, 1]))
-    print('     Expert | {0: >6.2f}  {1: >6.2f}'.format(
-        r_squared[1, 0], r_squared[1, 1]))
-    print('\n')
-
-    # simulate_multiple_runs(
-    #     seed_list, emb_true, cond_info_r8c2, freeze_options, fp_exp3_domain)
 
     # simulate_multiple_runs(
     #     seed_list, emb_true, cond_info_r8c2, freeze_options, fp_exp3_domain)
@@ -510,7 +449,7 @@ def simulate_run_random(
     """Simulate random selection progress for a trial configuration.
 
     Record:
-        n_trial, loss, R^2
+        n_trial, loss, r^2
     """
     # Define filepaths.
     fp_data_run = fp_exp_domain / Path('{0:s}_{1:s}_data.p'.format(cond_info['prefix'], run_id))
@@ -559,7 +498,7 @@ def simulate_run_random(
         r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
         is_valid[i_round] = True
         print(
-            'Round {0} ({1:d} trials) | Loss: {2:.2f} | R^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
+            'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
                 i_round, int(n_trial[i_round]), loss[i_round],
                 r_squared[i_round],
                 emb_inferred.theta['rho']['value'],
@@ -593,7 +532,7 @@ def simulate_run_active(
     """Simulate active selection progress for a trial configuration.
 
     Record:
-        n_trial, loss, R^2
+        n_trial, loss, r^2
     """
     # Define filepaths.
     fp_data_run = fp_exp_domain / Path('{0:s}_{1:s}_data.p'.format(cond_info['prefix'], run_id))
@@ -638,7 +577,7 @@ def simulate_run_active(
     r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
     is_valid[i_round] = True
     print(
-        'Round {0} ({1:d} trials) | Loss: {2:.2f} | R^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
+        'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
             i_round, int(n_trial[i_round]), loss[i_round],
             r_squared[i_round],
             emb_inferred.theta['rho']['value'],
@@ -697,7 +636,7 @@ def simulate_run_active(
         r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
         is_valid[i_round] = True
         print(
-            'Round {0} ({1:d} trials) | Loss: {2:.2f} | R^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
+            'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
                 i_round, int(n_trial[i_round]), loss[i_round],
                 r_squared[i_round],
                 emb_inferred.theta['rho']['value'],
@@ -764,6 +703,144 @@ def exp_3_ground_truth(n_stimuli, n_dim, n_group):
     # plt.hist(sim_mat[idx_upper])
     # plt.show()
     return emb
+
+
+def simulate_run_random_exp3(
+        emb_true, cond_info, freeze_options, fp_exp_domain, run_id, obs_novice):
+    """Simulate random selection progress for a trial configuration.
+
+    Record:
+        n_trial, loss, r^2
+    """
+    # Define filepaths.
+    fp_data_run = fp_exp_domain / Path('{0:s}_{1:s}_data.p'.format(cond_info['prefix'], run_id))
+    fp_obs = fp_exp_domain / Path('{0:s}_{1:s}_obs.hdf5'.format(cond_info['prefix'], run_id))
+    fp_emb_inf = fp_exp_domain / Path('{0:s}_{1:s}_emb_inf.hdf5'.format(cond_info['prefix'], run_id))
+
+    # Define expert agent based on true embedding.
+    agent_expert = Agent(emb_true, group_id=1)
+
+    # Expert similarity matrix associated with true embedding.
+    
+    def sim_func_true_novice(z_q, z_ref):
+        return emb_true.similarity(z_q, z_ref, group_id=0)
+    simmat_novice_true = similarity_matrix(
+        sim_func_true_novice, emb_true.z['value']
+    )
+
+    def sim_func_true_expert(z_q, z_ref):
+        return emb_true.similarity(z_q, z_ref, group_id=1)
+    simmat_expert_true = similarity_matrix(
+        sim_func_true_expert, emb_true.z['value']
+    )
+
+    # Generate a random docket of trials.
+    rand_gen = RandomGenerator(
+        cond_info['n_reference'], cond_info['n_select'])
+    docket = rand_gen.generate(
+        cond_info['n_trial_total'], emb_true.n_stimuli)
+    # Simulate expert similarity judgments.
+    obs_expert = agent_expert.simulate(docket)
+    obs_expert.save(fp_obs)
+
+    # Infer independent models with increasing amounts of data.
+    n_trial = np.arange(
+        cond_info['n_trial_initial'],
+        cond_info['n_trial_total'] + 1,
+        cond_info['n_trial_per_round']
+    )
+    n_round = len(n_trial)
+    r_squared = np.empty((n_round))
+    loss = np.empty((n_round))
+    is_valid = np.zeros((n_round), dtype=bool)
+
+    # Initialize embedding.
+    emb_inferred = Exponential(
+        emb_true.n_stimuli, emb_true.n_dim, emb_true.n_group
+    )
+    emb_inferred.freeze(freeze_options)
+    for i_round in range(n_round):
+        # Infer embedding.
+        init_mode = 'cold'
+        include_idx = np.arange(0, n_trial[i_round])
+
+        obs_round = trials.stack(
+            (obs_novice, obs_expert.subset(include_idx))
+        )
+
+        loss[i_round] = emb_inferred.fit(
+            obs_round, n_restart=10, init_mode=init_mode
+        )  # TODO n_retart=50
+        # Compare the inferred model with ground truth by comparing the
+        # similarity matrices implied by each model.
+
+        def sim_func_infer_novice(z_q, z_ref):
+            return emb_inferred.similarity(z_q, z_ref, group_id=0)
+        simmat_novice_infer = similarity_matrix(
+            sim_func_infer_novice, emb_inferred.z['value']
+        )
+
+        def sim_func_infer_expert(z_q, z_ref):
+            return emb_inferred.similarity(z_q, z_ref, group_id=1)
+        simmat_expert_infer = similarity_matrix(
+            sim_func_infer_expert, emb_inferred.z['value']
+        )
+
+        r_pearson_2 = np.zeros([2, 2], dtype=np.float)
+        r_pearson_2[0, 0] = matrix_comparison(
+            simmat_novice_infer, simmat_novice_true, score='pearson'
+        )
+        r_pearson_2[0, 1] = matrix_comparison(
+            simmat_novice_infer, simmat_expert_true, score='pearson'
+        )
+        r_pearson_2[1, 0] = matrix_comparison(
+            simmat_expert_infer, simmat_novice_true, score='pearson'
+        )
+        r_pearson_2[1, 1] = matrix_comparison(
+            simmat_expert_infer, simmat_expert_true, score='pearson'
+        )
+
+        r_squared[i_round] = matrix_comparison(
+            simmat_expert_infer, simmat_expert_true
+        )
+        is_valid[i_round] = True
+        print(
+            'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
+                i_round, int(n_trial[i_round]), loss[i_round],
+                r_squared[i_round],
+                emb_inferred.theta['rho']['value'],
+                emb_inferred.theta['tau']['value'],
+                emb_inferred.theta['beta']['value'],
+                emb_inferred.theta['gamma']['value']
+            )
+        )
+        print('    ============================')
+        print('      True  |    Inferred')
+        print('            | Novice  Expert')
+        print('    --------+-------------------')
+        print('     Novice | {0: >6.2f}  {1: >6.2f}'.format(
+            r_pearson_2[0, 0], r_pearson_2[0, 1]))
+        print('     Expert | {0: >6.2f}  {1: >6.2f}'.format(
+            r_pearson_2[1, 0], r_pearson_2[1, 1]))
+        # print('\n')
+
+        results_temp = {
+            'n_trial': np.expand_dims(n_trial[0:i_round + 1], axis=1),
+            'loss': np.expand_dims(loss[0:i_round + 1], axis=1),
+            'r_squared': np.expand_dims(r_squared[0:i_round + 1], axis=1),
+            'is_valid': np.expand_dims(is_valid[0:i_round + 1], axis=1)
+        }
+        data = {'info': cond_info, 'results': results_temp}
+        pickle.dump(data, open(fp_data_run.absolute().as_posix(), 'wb'))
+        emb_inferred.save(fp_emb_inf)  # TODO remove
+
+    results = {
+        'n_trial': np.expand_dims(n_trial, axis=1),
+        'loss': np.expand_dims(loss, axis=1),
+        'r_squared': np.expand_dims(r_squared, axis=1),
+        'is_valid': np.expand_dims(is_valid, axis=1)
+    }
+    return results
 
 
 def visualize_exp_1(fp_cv, fp_figure=None):
@@ -899,7 +976,7 @@ def visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure):
 
     ax.set_ylim(bottom=0., top=1.)
     ax.set_xlabel('Total Worker Hours')
-    ax.set_ylabel(r'$R^2$ Similarity')
+    ax.set_ylabel(r'$r^2$ Similarity')
     ax.legend()
     plt.tight_layout()
 
@@ -973,7 +1050,7 @@ def plot_exp2_condition(
 
 
 if __name__ == "__main__":
-    # fp_results = Path('/Users/bdroads/Projects/psiz-app/results')
+    fp_results = Path('/Users/bdroads/Projects/psiz-app/results')
     # fp_results = Path('/home/brett/packages/psiz-app/results')
-    fp_results = Path('/home/brett/Projects/psiz-app.git/results')
+    # fp_results = Path('/home/brett/Projects/psiz-app.git/results')
     main(fp_results)

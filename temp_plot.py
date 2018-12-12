@@ -14,12 +14,11 @@ import pickle
 def main(fp_results):
     fp_data_r2c1 = fp_results / Path('exp_2/birds/r2c1/r2c1_data.p')
     fp_data_r8c2 = fp_results / Path('exp_2/birds/r8c2/r8c2_data.p')
-    # fp_data_a8c2_r1 = fp_results / Path('exp_2/a8c2_data_temp.p')
-    fp_data_a8c2 = fp_results / Path('exp_2/birds/a8c2/a8c2_data.p')
-    fp_figure_exp2b = fp_results / Path('exp_2/exp2.pdf')
+    fp_data_a8c2 = fp_results / Path('exp_2/birds/a8c2/a8c2_913_data.p')
+    fp_figure_exp2b = fp_results / Path('exp_2/birds/exp2_temp.pdf')
+    
     data_r2c1 = pickle.load(open(fp_data_r2c1, 'rb'))
     data_r8c2 = pickle.load(open(fp_data_r8c2, 'rb'))
-    # data_a8c2_r1 = pickle.load(open(fp_data_a8c2_r1, 'rb'))
     data_a8c2 = pickle.load(open(fp_data_a8c2, 'rb'))
 
     # results = data_a8c2['results']
@@ -87,7 +86,7 @@ def main(fp_results):
 
     ax.set_ylim(bottom=0., top=1.)
     ax.set_xlabel('Total Worker Hours')
-    ax.set_ylabel(r'$R^2$ Similarity')
+    ax.set_ylabel(r'Pearson $\rho$')
     ax.legend()
     plt.tight_layout()
 
@@ -113,7 +112,7 @@ def add_temp_results(results, results_new):
     return results
 
 
-def plot_condition(ax, data, c_line, c_env, c_scatter, fontdict, rsquared_crit=.9):
+def plot_condition(ax, data, c_line, c_env, c_scatter, fontdict, rsquared_crit=.95):
     """Plot condition."""
     legend_name = data['info']['name']
     results = data['results']
@@ -130,7 +129,7 @@ def plot_condition(ax, data, c_line, c_env, c_scatter, fontdict, rsquared_crit=.
     n_trial_mask = ma.array(results['n_trial'], mask=np.logical_not(is_valid))
     n_trial_avg = np.mean(n_trial_mask, axis=1)
     
-    r_squared_mask = ma.array(results['r_squared'], mask=np.logical_not(is_valid))
+    r_squared_mask = ma.array(results['r_squared'], mask=np.logical_not(is_valid)) ** (.5)
     
     r_squared_mean_avg = np.mean(r_squared_mask, axis=1)
     r_squared_mean_min = np.min(r_squared_mask, axis=1)

@@ -72,8 +72,8 @@ def main(fp_results):
         # Run each experiment.
         # run_exp_0(domain, fp_exp0_domain)
         # run_exp_1(domain, fp_exp0_domain, fp_exp1_domain)
-        # run_exp_2(domain, fp_exp0_domain, fp_exp2_domain)
-        run_exp_3(domain, fp_exp0_domain, fp_exp3_domain)
+        run_exp_2(domain, fp_exp0_domain, fp_exp2_domain)
+        # run_exp_3(domain, fp_exp0_domain, fp_exp3_domain)
 
     # Visualize Experiment 1 Results.
     # fp_cv = fp_results / Path('exp_1/{0:s}'.format(domain))
@@ -217,8 +217,8 @@ def run_exp_2(domain, fp_exp0_domain, fp_exp2_domain):
         'selection_policy': 'random',
         'n_reference': 8,
         'n_select': 2,
-        'n_trial_initial': 500,
-        'n_trial_total': 15000,
+        'n_trial_initial': 50,  #500,
+        'n_trial_total': 15050,  #15000,
         'n_trial_per_round': 500,
         'time_s_per_trial': time_s_8c2
     }
@@ -229,8 +229,8 @@ def run_exp_2(domain, fp_exp0_domain, fp_exp2_domain):
         'selection_policy': 'active',
         'n_reference': 8,
         'n_select': 2,
-        'n_trial_initial': 500,
-        'n_trial_total': 10000,
+        'n_trial_initial': 50,  #500,
+        'n_trial_total': 10050,  #10000,
         'n_trial_per_round': 40,
         'time_s_per_trial': time_s_8c2,
         'n_query': 40,
@@ -239,14 +239,17 @@ def run_exp_2(domain, fp_exp0_domain, fp_exp2_domain):
     fp_emb_true = fp_exp0_domain / Path('emb_true.hdf5')
     emb_true = load_embedding(fp_emb_true)
 
-    simulate_multiple_runs(
-        seed_list, emb_true, cond_info_r2c1, freeze_options, fp_exp2_domain)
+    # simulate_multiple_runs(
+    #     seed_list, emb_true, cond_info_r2c1, freeze_options, fp_exp2_domain / Path(cond_info_r2c1['prefix'])
+    # )
+
+    # simulate_multiple_runs(
+    #     seed_list, emb_true, cond_info_r8c2, freeze_options, fp_exp2_domain / Path(cond_info_r8c2['prefix'])
+    # )
 
     simulate_multiple_runs(
-        seed_list, emb_true, cond_info_r8c2, freeze_options, fp_exp2_domain)
-
-    simulate_multiple_runs(
-        seed_list, emb_true, cond_info_a8c2, freeze_options, fp_exp2_domain)
+        seed_list, emb_true, cond_info_a8c2, freeze_options, fp_exp2_domain / Path(cond_info_a8c2['prefix'])
+    )
 
 
 def run_exp_3(domain, fp_exp0_domain, fp_exp3_domain):
@@ -270,9 +273,21 @@ def run_exp_3(domain, fp_exp0_domain, fp_exp3_domain):
     seed_list = [913, 192, 785, 891, 841]
 
     # Define experiment conditions.
-    cond_info_r8c2 = {
+    cond_info_r8c2_1g = {
         'name': 'Random 8-choose-2',
-        'prefix': 'r8c2',
+        'prefix': 'r8c2_1g',
+        'domain': domain,
+        'selection_policy': 'random',
+        'n_reference': 8,
+        'n_select': 2,
+        'n_trial_initial': 6010,
+        'n_trial_total': 6010,
+        'n_trial_per_round': 250,
+    }
+
+    cond_info_r8c2_2g = {
+        'name': 'Random 8-choose-2',
+        'prefix': 'r8c2_2g',
         'domain': domain,
         'selection_policy': 'random',
         'n_reference': 8,
@@ -282,29 +297,17 @@ def run_exp_3(domain, fp_exp0_domain, fp_exp3_domain):
         'n_trial_per_round': 250,
     }
 
-    cond_info_a8c2 = {
-        'name': 'Active 8-choose-2',
-        'prefix': 'a8c2',
-        'domain': domain,
-        'selection_policy': 'active',
-        'n_reference': 8,
-        'n_select': 2,
-        'n_trial_initial': 500,
-        'n_trial_total': 10000,
-        'n_trial_per_round': 40,
-        'n_query': 40,
-    }
-
+    np.random.seed(548)
     emb_true = exp_3_ground_truth(n_stimuli, n_dim, n_group)
     # fp_emb_true = fp_exp0_domain / Path('emb_true.hdf5')
     # emb_true = load_embedding(fp_emb_true)
 
-    # Generate a random docket of trials to show each group.
+    # Generate a random docket of trials to show novices for each run.
     generator = RandomGenerator(
-        cond_info_r8c2['n_reference'],
-        cond_info_r8c2['n_select'])
+        cond_info_r8c2_2g['n_reference'],
+        cond_info_r8c2_2g['n_select'])
     docket = generator.generate(
-        cond_info_r8c2['n_trial_total'], emb_true.n_stimuli
+        cond_info_r8c2_2g['n_trial_total'], emb_true.n_stimuli
     )
 
     # Simulate novice similarity judgments.
@@ -313,16 +316,16 @@ def run_exp_3(domain, fp_exp0_domain, fp_exp3_domain):
 
     # TODO for loop
     run_id = str(seed_list[0])
-    results = simulate_run_random_exp3(
-        emb_true, cond_info_r8c2, freeze_options, fp_exp3_domain, run_id,
-        obs_novice
+
+    results = simulate_run_random(
+        emb_true, cond_info_r8c2_1g, freeze_options, fp_exp3_domain, run_id,
+        group_id=1
     )
 
-    # simulate_multiple_runs(
-    #     seed_list, emb_true, cond_info_r8c2, freeze_options, fp_exp3_domain)
-
-    # simulate_multiple_runs(
-    #     seed_list, emb_true, cond_info_a8c2, freeze_options, fp_exp3_domain)
+    # results = simulate_run_random_exp3(
+    #     emb_true, cond_info_r8c2_2g, freeze_options, fp_exp3_domain, run_id,
+    #     obs_novice
+    # )
 
 
 def embedding_cv(skf, obs, embedding_constructor, n_stimuli, freeze_options):
@@ -445,7 +448,7 @@ def simulate_run(
 
 
 def simulate_run_random(
-        emb_true, cond_info, freeze_options, fp_exp_domain, run_id):
+        emb_true, cond_info, freeze_options, fp_exp_domain, run_id, group_id=0):
     """Simulate random selection progress for a trial configuration.
 
     Record:
@@ -457,11 +460,14 @@ def simulate_run_random(
     fp_emb_inf = fp_exp_domain / Path('{0:s}_{1:s}_emb_inf.hdf5'.format(cond_info['prefix'], run_id))
 
     # Define agent based on true embedding.
-    agent = Agent(emb_true)
+    agent = Agent(emb_true, group_id=group_id)
 
     # Similarity matrix associated with true embedding.
+    def sim_func_true(z_q, z_ref):
+        return emb_true.similarity(z_q, z_ref, group_id=group_id)
     simmat_true = similarity_matrix(
-        emb_true.similarity, emb_true.z['value'])
+        sim_func_true, emb_true.z['value']
+    )
 
     # Generate a random docket of trials.
     rand_gen = RandomGenerator(
@@ -470,6 +476,7 @@ def simulate_run_random(
         cond_info['n_trial_total'], emb_true.n_stimuli)
     # Simulate similarity judgments.
     obs = agent.simulate(docket)
+    obs.set_group_id(0)
 
     # Infer independent models with increasing amounts of data.
     n_trial = np.arange(
@@ -483,7 +490,9 @@ def simulate_run_random(
     is_valid = np.zeros((n_round), dtype=bool)
 
     # Initialize embedding.
-    emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
+    emb_inferred = Exponential(
+        emb_true.n_stimuli, n_dim=emb_true.n_dim, n_group=1
+    )
     emb_inferred.freeze(freeze_options)
     for i_round in range(n_round):
         # Infer embedding.
@@ -516,7 +525,7 @@ def simulate_run_random(
         data = {'info': cond_info, 'results': results_temp}
         pickle.dump(data, open(fp_data_run.absolute().as_posix(), 'wb'))
         obs.save(fp_obs)
-        emb_inferred.save(fp_emb_inf)
+        # emb_inferred.save(fp_emb_inf)
 
     results = {
         'n_trial': np.expand_dims(n_trial, axis=1),
@@ -655,7 +664,7 @@ def simulate_run_active(
         pickle.dump(data, open(fp_data_run.absolute().as_posix(), 'wb'))
         obs.save(fp_obs)
         emb_inferred.save(fp_emb_inf)
-        if r_squared[i_round] > .9:
+        if r_squared[i_round] > .91:
             at_criterion = True
             print('Reached criterion.')
 
@@ -801,7 +810,7 @@ def simulate_run_random_exp3(
         )
 
         r_squared[i_round] = matrix_comparison(
-            simmat_expert_infer, simmat_expert_true
+            simmat_expert_infer, simmat_expert_true,
         )
         is_valid[i_round] = True
         print(
@@ -832,7 +841,7 @@ def simulate_run_random_exp3(
         }
         data = {'info': cond_info, 'results': results_temp}
         pickle.dump(data, open(fp_data_run.absolute().as_posix(), 'wb'))
-        emb_inferred.save(fp_emb_inf)  # TODO remove
+        # emb_inferred.save(fp_emb_inf)  # TODO remove
 
     results = {
         'n_trial': np.expand_dims(n_trial, axis=1),
@@ -1050,7 +1059,7 @@ def plot_exp2_condition(
 
 
 if __name__ == "__main__":
-    fp_results = Path('/Users/bdroads/Projects/psiz-app/results')
+    # fp_results = Path('/Users/bdroads/Projects/psiz-app/results')
     # fp_results = Path('/home/brett/packages/psiz-app/results')
-    # fp_results = Path('/home/brett/Projects/psiz-app.git/results')
+    fp_results = Path('/home/brett/Projects/psiz-app.git/results')
     main(fp_results)

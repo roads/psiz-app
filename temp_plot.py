@@ -14,7 +14,7 @@ import pickle
 def main(fp_results):
     fp_data_r2c1 = fp_results / Path('exp_2/birds/r2c1/r2c1_data.p')
     fp_data_r8c2 = fp_results / Path('exp_2/birds/r8c2/r8c2_data.p')
-    fp_data_a8c2 = fp_results / Path('exp_2/birds/a8c2/a8c2_913_data.p')
+    fp_data_a8c2 = fp_results / Path('exp_2/birds/a8c2/a8c2_785_data.p')
     fp_figure_exp2b = fp_results / Path('exp_2/birds/exp2_temp.pdf')
     
     data_r2c1 = pickle.load(open(fp_data_r2c1, 'rb'))

@@ -68,12 +68,13 @@ def main(fp_results):
         fp_exp0_domain = fp_results / Path('exp_0/{0:s}'.format(domain))
         fp_exp1_domain = fp_results / Path('exp_1/{0:s}'.format(domain))
         fp_exp2_domain = fp_results / Path('exp_2/{0:s}'.format(domain))
-        fp_exp3_domain = fp_results / Path('exp_3/{0:s}'.format(domain))
+        
         # Run each experiment.
         # run_exp_0(domain, fp_exp0_domain)
         # run_exp_1(domain, fp_exp0_domain, fp_exp1_domain)
-        run_exp_2(domain, fp_exp0_domain, fp_exp2_domain)
-        # run_exp_3(domain, fp_exp0_domain, fp_exp3_domain)
+        # run_exp_2(domain, fp_exp0_domain, fp_exp2_domain)
+    fp_exp3 = fp_results / Path('exp_3')
+    run_exp_3(domain, fp_exp3)
 
     # Visualize Experiment 1 Results.
     # fp_cv = fp_results / Path('exp_1/{0:s}'.format(domain))
@@ -217,8 +218,8 @@ def run_exp_2(domain, fp_exp0_domain, fp_exp2_domain):
         'selection_policy': 'random',
         'n_reference': 8,
         'n_select': 2,
-        'n_trial_initial': 50,  #500,
-        'n_trial_total': 15050,  #15000,
+        'n_trial_initial': 50,
+        'n_trial_total': 15050,
         'n_trial_per_round': 500,
         'time_s_per_trial': time_s_8c2
     }
@@ -252,7 +253,7 @@ def run_exp_2(domain, fp_exp0_domain, fp_exp2_domain):
     )
 
 
-def run_exp_3(domain, fp_exp0_domain, fp_exp3_domain):
+def run_exp_3(domain, fp_exp3):
     """Run Experiment 2.
 
     Random 8-choose-2 novices
@@ -262,8 +263,8 @@ def run_exp_3(domain, fp_exp0_domain, fp_exp3_domain):
     Generate all random novice data
     Generate all random expert data
 
-    Infer joint embedding with all random novice + incremental random expert
-    Infer joint embedding with all random novice + incremental active expert
+    Infer independent expert embedding.
+    Infer joint novice and expert embedding.
     """
     # Settings.
     n_stimuli = 100
@@ -271,7 +272,7 @@ def run_exp_3(domain, fp_exp0_domain, fp_exp3_domain):
     n_group = 2
     freeze_options = {'theta': {'rho': 2., 'tau': 1.}}
     seed_list = [913, 192, 785, 891, 841]
-
+    
     # Define experiment conditions.
     cond_info_r8c2_1g = {
         'name': 'Random 8-choose-2',
@@ -280,8 +281,8 @@ def run_exp_3(domain, fp_exp0_domain, fp_exp3_domain):
         'selection_policy': 'random',
         'n_reference': 8,
         'n_select': 2,
-        'n_trial_initial': 6010,
-        'n_trial_total': 6010,
+        'n_trial_initial': 50,
+        'n_trial_total': 7050,
         'n_trial_per_round': 250,
     }
 
@@ -289,18 +290,17 @@ def run_exp_3(domain, fp_exp0_domain, fp_exp3_domain):
         'name': 'Random 8-choose-2',
         'prefix': 'r8c2_2g',
         'domain': domain,
-        'selection_policy': 'random',
+        'selection_policy': 'random-existing',
         'n_reference': 8,
         'n_select': 2,
-        'n_trial_initial': 10,
-        'n_trial_total': 6010,
+        'n_trial_initial': 50,
+        'n_trial_total': 3050,
         'n_trial_per_round': 250,
     }
 
+    # Generate ground-truth embedding.
     np.random.seed(548)
     emb_true = exp_3_ground_truth(n_stimuli, n_dim, n_group)
-    # fp_emb_true = fp_exp0_domain / Path('emb_true.hdf5')
-    # emb_true = load_embedding(fp_emb_true)
 
     # Generate a random docket of trials to show novices for each run.
     generator = RandomGenerator(
@@ -314,18 +314,16 @@ def run_exp_3(domain, fp_exp0_domain, fp_exp3_domain):
     agent_novice = Agent(emb_true, group_id=0)
     obs_novice = agent_novice.simulate(docket)
 
-    # TODO for loop
-    run_id = str(seed_list[0])
-
-    results = simulate_run_random(
-        emb_true, cond_info_r8c2_1g, freeze_options, fp_exp3_domain, run_id,
-        group_id=1
+    simulate_multiple_runs(
+        seed_list, emb_true, cond_info_r8c2_1g, freeze_options,
+        fp_exp3 / Path(cond_info_r8c2_1g['prefix']), group_id=1
     )
 
-    # results = simulate_run_random_exp3(
-    #     emb_true, cond_info_r8c2_2g, freeze_options, fp_exp3_domain, run_id,
-    #     obs_novice
-    # )
+    simulate_multiple_runs(
+        seed_list, emb_true, cond_info_r8c2_2g, freeze_options,
+        fp_exp3 / Path(cond_info_r8c2_2g['prefix']), group_id=1,
+        obs_existing=obs_novice
+    )
 
 
 def embedding_cv(skf, obs, embedding_constructor, n_stimuli, freeze_options):
@@ -393,17 +391,21 @@ def evaluate_fold(
 
 
 def simulate_multiple_runs(
-        seed_list, emb_true, cond_info, freeze_options, fp_exp_domain):
+        seed_list, emb_true, cond_info, freeze_options, dir_cond,
+        group_id=0, obs_existing=None):
     """Perform multiple runs of simulation.
 
     The random number generator is re-seeded before each run. Data is
     saved after each run.
     """
-    fp_data = fp_exp_domain / Path('{0:s}_data.p'.format(cond_info['prefix']))
+    fp_data = dir_cond / Path('{0:s}_data.p'.format(cond_info['prefix']))
     if fp_data.is_file():
         data = pickle.load(open(fp_data, 'rb'))
         results = data['results']
     else:
+        # Make directory
+        if not os.path.exists(dir_cond):
+            os.makedirs(dir_cond)
         data = None
         results = None
 
@@ -411,8 +413,8 @@ def simulate_multiple_runs(
     for i_run in range(n_run):
         np.random.seed(seed_list[i_run])
         results_run = simulate_run(
-            emb_true, cond_info, freeze_options, fp_exp_domain,
-            str(seed_list[i_run])
+            emb_true, cond_info, freeze_options, dir_cond,
+            str(seed_list[i_run]), group_id=group_id, obs_existing=obs_existing
         )
         results = concat_runs(results, results_run)
         data = {'info': cond_info, 'results': results}
@@ -432,32 +434,45 @@ def concat_runs(results, results_new):
 
 
 def simulate_run(
-        emb_true, cond_info, freeze_options, fp_exp_domain, run_id):
+        emb_true, cond_info, freeze_options, dir_cond, run_id,
+        group_id=0, obs_existing=None):
     """Simulate a single run."""
-    if cond_info['selection_policy'] is 'random':
+    if cond_info['selection_policy'] == 'random':
         results_run = simulate_run_random(
-            emb_true, cond_info, freeze_options, fp_exp_domain, run_id)
-    elif cond_info['selection_policy'] is 'active':
+            emb_true, cond_info, freeze_options, dir_cond, run_id,
+            group_id=group_id
+        )
+    elif cond_info['selection_policy'] == 'active':
         results_run = simulate_run_active(
-            emb_true, cond_info, freeze_options, fp_exp_domain, run_id)
+            emb_true, cond_info, freeze_options, dir_cond, run_id,
+            group_id=group_id
+        )
+    elif cond_info['selection_policy'] == 'random-existing':
+        results = simulate_run_random_existing(
+            emb_true, cond_info, freeze_options, dir_cond, run_id,
+            group_id, obs_existing
+        )
     else:
         raise ValueError(
-            'The `selection_policy` must be either "random" or "active".'
+            'The `selection_policy` {0} is not defined. Must be either '
+            '"random", "random-existing", or "active".'.format(
+                cond_info['selection_policy']
+            )
         )
     return results_run
 
 
 def simulate_run_random(
-        emb_true, cond_info, freeze_options, fp_exp_domain, run_id, group_id=0):
+        emb_true, cond_info, freeze_options, dir_cond, run_id, group_id=0):
     """Simulate random selection progress for a trial configuration.
 
     Record:
         n_trial, loss, r^2
     """
     # Define filepaths.
-    fp_data_run = fp_exp_domain / Path('{0:s}_{1:s}_data.p'.format(cond_info['prefix'], run_id))
-    fp_obs = fp_exp_domain / Path('{0:s}_{1:s}_obs.hdf5'.format(cond_info['prefix'], run_id))
-    fp_emb_inf = fp_exp_domain / Path('{0:s}_{1:s}_emb_inf.hdf5'.format(cond_info['prefix'], run_id))
+    fp_data_run = dir_cond / Path('{0:s}_{1:s}_data.p'.format(cond_info['prefix'], run_id))
+    fp_obs = dir_cond / Path('{0:s}_{1:s}_obs.hdf5'.format(cond_info['prefix'], run_id))
+    fp_emb_inf = dir_cond / Path('{0:s}_{1:s}_emb_inf.hdf5'.format(cond_info['prefix'], run_id))
 
     # Define agent based on true embedding.
     agent = Agent(emb_true, group_id=group_id)
@@ -537,16 +552,16 @@ def simulate_run_random(
 
 
 def simulate_run_active(
-        emb_true, cond_info, freeze_options, fp_exp_domain, run_id):
+        emb_true, cond_info, freeze_options, dir_cond, run_id, group_id=0):
     """Simulate active selection progress for a trial configuration.
 
     Record:
         n_trial, loss, r^2
     """
     # Define filepaths.
-    fp_data_run = fp_exp_domain / Path('{0:s}_{1:s}_data.p'.format(cond_info['prefix'], run_id))
-    fp_obs = fp_exp_domain / Path('{0:s}_{1:s}_obs.hdf5'.format(cond_info['prefix'], run_id))
-    fp_emb_inf = fp_exp_domain / Path('{0:s}_{1:s}_emb_inf.hdf5'.format(cond_info['prefix'], run_id))
+    fp_data_run = dir_cond / Path('{0:s}_{1:s}_data.p'.format(cond_info['prefix'], run_id))
+    fp_obs = dir_cond / Path('{0:s}_{1:s}_obs.hdf5'.format(cond_info['prefix'], run_id))
+    fp_emb_inf = dir_cond / Path('{0:s}_{1:s}_emb_inf.hdf5'.format(cond_info['prefix'], run_id))
 
     # Define agent based on true embedding.
     agent = Agent(emb_true)
@@ -628,14 +643,16 @@ def simulate_run_active(
         obs = trials.stack([obs, new_obs])
         n_trial[i_round] = obs.n_trial
 
+        # if (i_round < 5) or (np.mod(i_round, 5) == 0):  # TODO try
         if np.mod(i_round, 5) == 0:
             # Infer new embedding with exact restarts.
             freeze_options = {'z': emb_inferred.z['value']}
             emb_inferred.freeze(freeze_options)
             loss[i_round] = emb_inferred.fit(
-                obs, n_restart=1, init_mode='exact')
+                obs, n_restart=3, init_mode='exact')
+            emb_inferred.thaw(['z'])
             loss[i_round] = emb_inferred.fit(
-                obs, n_restart=10, init_mode='cold')
+                obs, n_restart=50, init_mode='cold')
         else:
             loss[i_round] = emb_inferred.evaluate(obs)
         # Compare the inferred model with ground truth by comparing the
@@ -714,17 +731,18 @@ def exp_3_ground_truth(n_stimuli, n_dim, n_group):
     return emb
 
 
-def simulate_run_random_exp3(
-        emb_true, cond_info, freeze_options, fp_exp_domain, run_id, obs_novice):
+def simulate_run_random_existing(
+        emb_true, cond_info, freeze_options, dir_cond, run_id,
+        group_id, obs_existing):
     """Simulate random selection progress for a trial configuration.
 
     Record:
         n_trial, loss, r^2
     """
     # Define filepaths.
-    fp_data_run = fp_exp_domain / Path('{0:s}_{1:s}_data.p'.format(cond_info['prefix'], run_id))
-    fp_obs = fp_exp_domain / Path('{0:s}_{1:s}_obs.hdf5'.format(cond_info['prefix'], run_id))
-    fp_emb_inf = fp_exp_domain / Path('{0:s}_{1:s}_emb_inf.hdf5'.format(cond_info['prefix'], run_id))
+    fp_data_run = dir_cond / Path('{0:s}_{1:s}_data.p'.format(cond_info['prefix'], run_id))
+    fp_obs = dir_cond / Path('{0:s}_{1:s}_obs.hdf5'.format(cond_info['prefix'], run_id))
+    fp_emb_inf = dir_cond / Path('{0:s}_{1:s}_emb_inf.hdf5'.format(cond_info['prefix'], run_id))
 
     # Define expert agent based on true embedding.
     agent_expert = Agent(emb_true, group_id=1)
@@ -774,12 +792,12 @@ def simulate_run_random_exp3(
         include_idx = np.arange(0, n_trial[i_round])
 
         obs_round = trials.stack(
-            (obs_novice, obs_expert.subset(include_idx))
+            (obs_existing, obs_expert.subset(include_idx))
         )
 
         loss[i_round] = emb_inferred.fit(
-            obs_round, n_restart=10, init_mode=init_mode
-        )  # TODO n_retart=50
+            obs_round, n_restart=50, init_mode=init_mode
+        )
         # Compare the inferred model with ground truth by comparing the
         # similarity matrices implied by each model.
 
@@ -841,7 +859,6 @@ def simulate_run_random_exp3(
         }
         data = {'info': cond_info, 'results': results_temp}
         pickle.dump(data, open(fp_data_run.absolute().as_posix(), 'wb'))
-        # emb_inferred.save(fp_emb_inf)  # TODO remove
 
     results = {
         'n_trial': np.expand_dims(n_trial, axis=1),
@@ -1005,8 +1022,7 @@ def plot_exp2_condition(
 
     time_factor = data['info']['time_s_per_trial'] / (60 * 60)
     n_run = results['n_trial'].shape[1]
-    
-    # TODO
+
     if 'is_valid' in results:
         is_valid = results['is_valid']
     else:
@@ -1060,6 +1076,6 @@ def plot_exp2_condition(
 
 if __name__ == "__main__":
     # fp_results = Path('/Users/bdroads/Projects/psiz-app/results')
-    # fp_results = Path('/home/brett/packages/psiz-app/results')
+    # fp_results = Path('/home/brett/projects/psiz-app/results')
     fp_results = Path('/home/brett/Projects/psiz-app.git/results')
     main(fp_results)

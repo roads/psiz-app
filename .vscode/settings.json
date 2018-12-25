@@ -1,3 +1,7 @@
 {
+<<<<<<< Updated upstream
     "python.pythonPath": "/home/brett/miniconda/envs/psiz/bin/python"
+=======
+    "python.pythonPath": "/Users/bdroads/anaconda3/envs/py36/bin/python"
+>>>>>>> Stashed changes
 }

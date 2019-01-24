@@ -31,8 +31,6 @@ from psiz import datasets
 from psiz import visualize
 from psiz.utils import similarity_matrix, matrix_comparison
 
-# from psiz.trials import Observations, load_trials
-# import psiz.utils as ut
 
 def main(fp_results):
     """Run all experiments.
@@ -70,30 +68,34 @@ def main(fp_results):
         fp_exp2_domain = fp_results / Path('exp_2/{0:s}'.format(domain))
         
         # Run each experiment.
-        # run_exp_0(domain, fp_exp0_domain)
-        # run_exp_1(domain, fp_exp0_domain, fp_exp1_domain)
-        # run_exp_2(domain, fp_exp0_domain, fp_exp2_domain)
+        run_exp_0(domain, fp_exp0_domain)
+        run_exp_1(domain, fp_exp0_domain, fp_exp1_domain)
+        run_exp_2(domain, fp_exp0_domain, fp_exp2_domain)
     fp_exp3 = fp_results / Path('exp_3')
     run_exp_3(domain, fp_exp3)
 
     # Visualize Experiment 1 Results.
-    # fp_cv = fp_results / Path('exp_1/{0:s}'.format(domain))
-    # fp_figure_exp1 = fp_results / Path('exp_1/{0:s}/exp1.pdf'.format(domain))
-    # visualize_exp_1(fp_cv, fp_figure_exp1)
+    fp_cv = fp_results / Path('exp_1/{0:s}'.format(domain))
+    fp_figure_exp1 = fp_results / Path('exp_1/{0:s}/exp1.pdf'.format(domain))
+    visualize_exp_1(fp_cv, fp_figure_exp1)
 
     # Visualize Experiment 2 Results.
-    # Define filepaths.
-    # fp_data_r2c1 = fp_results / Path('exp_2/{0:s}/r2c1/r2c1_data.p'.format(domain))
-    # fp_data_r8c2 = fp_results / Path('exp_2/{0:s}/r8c2/r8c2_data.p'.format(domain))
-    # fp_data_a8c2 = fp_results / Path('exp_2/{0:s}/a8c2/a8c2_data.p'.format(domain))
-    # fp_figure_exp2 = fp_results / Path('exp_2/{0:s}/exp2.pdf'.format(domain))
-    # # Load data.
-    # data_r2c1 = pickle.load(open(fp_data_r2c1, 'rb'))
-    # data_r8c2 = pickle.load(open(fp_data_r8c2, 'rb'))
-    # data_a8c2 = pickle.load(open(fp_data_a8c2, 'rb'))
-    # visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure_exp2)
+    fp_data_r2c1 = fp_results / Path('exp_2/{0:s}/r2c1/r2c1_data.p'.format(domain))
+    fp_data_r8c2 = fp_results / Path('exp_2/{0:s}/r8c2/r8c2_data.p'.format(domain))
+    fp_data_a8c2 = fp_results / Path('exp_2/{0:s}/a8c2/a8c2_data.p'.format(domain))
+    fp_figure_exp2 = fp_results / Path('exp_2/{0:s}/exp2.pdf'.format(domain))
+    data_r2c1 = pickle.load(open(fp_data_r2c1, 'rb'))
+    data_r8c2 = pickle.load(open(fp_data_r8c2, 'rb'))
+    data_a8c2 = pickle.load(open(fp_data_a8c2, 'rb'))
+    visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure_exp2)
 
     # Visualize Experiment 3 Results.
+    fp_data_r2c1 = fp_results / Path('exp_3/r8c2_1g/r8c2_1g_data.p')
+    fp_data_r8c2 = fp_results / Path('exp_3/r8c2_2g/r8c2_2g_data.p')
+    fp_figure_exp3 = fp_results / Path('exp_3/exp3.pdf')
+    data_r8c2_g1 = pickle.load(open(fp_data_r2c1, 'rb'))
+    data_r8c2_g2 = pickle.load(open(fp_data_r8c2, 'rb'))
+    visualize_exp_3(data_r8c2_g1, data_r8c2_g2, fp_figure_exp3)
 
 
 def run_exp_0(domain, freeze_options, fp_exp0_domain):
@@ -282,7 +284,7 @@ def run_exp_3(domain, fp_exp3):
         'n_reference': 8,
         'n_select': 2,
         'n_trial_initial': 50,
-        'n_trial_total': 7050,
+        'n_trial_total': 8050,
         'n_trial_per_round': 250,
     }
 
@@ -294,7 +296,7 @@ def run_exp_3(domain, fp_exp3):
         'n_reference': 8,
         'n_select': 2,
         'n_trial_initial': 50,
-        'n_trial_total': 3050,
+        'n_trial_total': 3550,
         'n_trial_per_round': 250,
     }
 
@@ -314,10 +316,11 @@ def run_exp_3(domain, fp_exp3):
     agent_novice = Agent(emb_true, group_id=0)
     obs_novice = agent_novice.simulate(docket)
 
-    simulate_multiple_runs(
-        seed_list, emb_true, cond_info_r8c2_1g, freeze_options,
-        fp_exp3 / Path(cond_info_r8c2_1g['prefix']), group_id=1
-    )
+    # TODO
+    # simulate_multiple_runs(
+    #     seed_list, emb_true, cond_info_r8c2_1g, freeze_options,
+    #     fp_exp3 / Path(cond_info_r8c2_1g['prefix']), group_id=1
+    # )
 
     simulate_multiple_runs(
         seed_list, emb_true, cond_info_r8c2_2g, freeze_options,
@@ -448,7 +451,7 @@ def simulate_run(
             group_id=group_id
         )
     elif cond_info['selection_policy'] == 'random-existing':
-        results = simulate_run_random_existing(
+        results_run = simulate_run_random_existing(
             emb_true, cond_info, freeze_options, dir_cond, run_id,
             group_id, obs_existing
         )
@@ -957,7 +960,7 @@ def print_ttest(m1, m2, x1, x2):
     )
 
 
-def visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure):
+def visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure=None):
     """Visualize results of experiment."""
     # Standard.
     rgb1 = np.array((0.0, 0.0, 0.5312, 1.0))
@@ -1000,9 +1003,9 @@ def visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure):
     i_cond = 1
     plot_exp2_condition(ax, data_a8c2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond], fontdict)
 
-    ax.set_ylim(bottom=0., top=1.)
-    ax.set_xlabel('Total Worker Hours')
-    ax.set_ylabel(r'$r^2$ Similarity')
+    ax.set_ylim(bottom=0., top=1.05)
+    ax.set_xlabel('Total Expert Worker Hours')
+    ax.set_ylabel(r'Pearson $\rho$')
     ax.legend()
     plt.tight_layout()
 
@@ -1015,7 +1018,7 @@ def visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure):
 
 
 def plot_exp2_condition(
-        ax, data, c_line, c_env, c_scatter, fontdict, rsquared_crit=.9):
+        ax, data, c_line, c_env, c_scatter, fontdict, rsquared_crit=.95):
     """Plot condition."""
     legend_name = data['info']['name']
     results = data['results']
@@ -1031,34 +1034,154 @@ def plot_exp2_condition(
     n_trial_mask = ma.array(results['n_trial'], mask=np.logical_not(is_valid))
     n_trial_avg = np.mean(n_trial_mask, axis=1)
     
-    r_squared_mask = ma.array(results['r_squared'], mask=np.logical_not(is_valid))
+    r_mask = ma.array(results['r_squared'], mask=np.logical_not(is_valid))**.5
     
-    r_squared_mean_avg = np.mean(r_squared_mask, axis=1)
-    r_squared_mean_min = np.min(r_squared_mask, axis=1)
-    r_squared_mean_max = np.max(r_squared_mask, axis=1)
+    r_mean_avg = np.mean(r_mask, axis=1)
+    r_mean_min = np.min(r_mask, axis=1)
+    r_mean_max = np.max(r_mask, axis=1)
 
     ax.semilogx(
-        time_factor * n_trial_avg, r_squared_mean_avg, '-', color=c_line,
+        time_factor * n_trial_avg, r_mean_avg, '-', color=c_line,
         label='{0:s}'.format(legend_name)
         # label='{0:s} ({1:d})'.format(legend_name, n_run)
     )
     ax.fill_between(
-        time_factor * n_trial_avg, r_squared_mean_min, r_squared_mean_max,
+        time_factor * n_trial_avg, r_mean_min, r_mean_max,
         facecolor=c_env, edgecolor='none'
     )
 
     # Plot Criterion
-    dmy_idx = np.arange(len(r_squared_mean_avg))
-    locs = np.greater_equal(r_squared_mean_avg, rsquared_crit)
+    dmy_idx = np.arange(len(r_mean_avg))
+    locs = np.greater_equal(r_mean_avg, rsquared_crit)
     if np.sum(locs) > 0:
         after_idx = dmy_idx[locs]
         after_idx = after_idx[0]
         before_idx = after_idx - 1
-        segment_rise = r_squared_mean_avg[after_idx] - r_squared_mean_avg[before_idx]
+        segment_rise = r_mean_avg[after_idx] - r_mean_avg[before_idx]
         segment_run = n_trial_avg[after_idx] - n_trial_avg[before_idx]
         segment_slope = segment_rise / segment_run
         xg = np.arange(segment_run, dtype=np.int)
-        yg = segment_slope * xg + r_squared_mean_avg[before_idx]
+        yg = segment_slope * xg + r_mean_avg[before_idx]
+
+        locs2 = np.greater_equal(yg, rsquared_crit)
+        trial_thresh = xg[locs2]
+        trial_thresh = trial_thresh[0]
+        r2_thresh = yg[trial_thresh]
+        trial_thresh = trial_thresh + n_trial_avg[before_idx]
+
+        ax.scatter(
+            time_factor * trial_thresh, r2_thresh, marker='d', color=c_scatter,
+            edgecolors='k')
+        ax.text(
+            time_factor * trial_thresh, r2_thresh + .06, "{0:.1f}".format(time_factor * trial_thresh),
+            fontdict=fontdict)
+
+
+def visualize_exp_3(data_r8c2_g1, data_r8c2_g2, fp_figure=None):
+    # Standard.
+    rgb1 = np.array((0.0, 0.0, 0.5312, 1.0))
+    rgb2 = np.array((1.0, 0.8125, 0.0, 1.0))
+    rgb3 = np.array((0.5, 0.0, 0.0, 1.0))
+    # Transparent version.
+    alpha_val = .2
+    rgb1_trans = np.array((0.0, 0.0, 0.5312, alpha_val))
+    rgb2_trans = np.array((1.0, 0.8125, 0.0, alpha_val))
+    rgb3_trans = np.array((0.5, 0.0, 0.0, alpha_val))
+    # Lighter version.
+    color_scale = .4  # Lower scale yeilds lighter colors.
+    rgb1_light = 1 - (color_scale * (1 - rgb1))
+    rgb2_light = 1 - (color_scale * (1 - rgb2))
+    rgb3_light = 1 - (color_scale * (1 - rgb3))
+
+    c_line = [tuple(rgb1), tuple(rgb3), tuple(rgb2)]
+    # c_env = [tuple(rgb1_light), tuple(rgb3_light)]
+    c_env = [tuple(rgb1_trans), tuple(rgb3_trans), tuple(rgb2_trans)]
+    c_scatter = [
+        np.expand_dims(rgb1, axis=0),
+        np.expand_dims(rgb3, axis=0),
+        np.expand_dims(rgb2, axis=0)
+    ]
+
+    fontdict = {
+        'fontsize': 10,
+        'verticalalignment': 'top',
+        'horizontalalignment': 'left'
+    }
+
+    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
+
+    i_cond = 0
+    plot_exp3_condition(
+        ax, data_r8c2_g1, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
+        fontdict, 'Independent'
+    )
+
+    i_cond = 1
+    plot_exp3_condition(
+        ax, data_r8c2_g2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
+        fontdict, 'Shared'
+    )
+
+    ax.set_ylim(bottom=0., top=1.05)
+    ax.set_xlabel('Total Expert Worker Hours')
+    ax.set_ylabel(r'Pearson $\rho$')
+    ax.legend()
+    plt.tight_layout()
+
+    if fp_figure is None:
+        plt.show()
+    else:
+        plt.savefig(
+            fp_figure.absolute().as_posix(), format='pdf',
+            bbox_inches="tight", dpi=100)
+
+
+def plot_exp3_condition(
+        ax, data, c_line, c_env, c_scatter, fontdict, legend_name,
+        rsquared_crit=.95):
+    """Plot condition."""
+    results = data['results']
+
+    time_s_8c2 = 8.98
+    time_factor = time_s_8c2 / (60 * 60)
+    n_run = results['n_trial'].shape[1]
+
+    if 'is_valid' in results:
+        is_valid = results['is_valid']
+    else:
+        is_valid = np.ones(results['r_squared'].shape, dtype=bool)
+
+    n_trial_mask = ma.array(results['n_trial'], mask=np.logical_not(is_valid))
+    n_trial_avg = np.mean(n_trial_mask, axis=1)
+    
+    r_mask = ma.array(results['r_squared'], mask=np.logical_not(is_valid))**.5
+    
+    r_mean_avg = np.mean(r_mask, axis=1)
+    r_mean_min = np.min(r_mask, axis=1)
+    r_mean_max = np.max(r_mask, axis=1)
+
+    ax.semilogx(
+        time_factor * n_trial_avg, r_mean_avg, '-', color=c_line,
+        label='{0:s}'.format(legend_name)
+        # label='{0:s} ({1:d})'.format(legend_name, n_run)
+    )
+    ax.fill_between(
+        time_factor * n_trial_avg, r_mean_min, r_mean_max,
+        facecolor=c_env, edgecolor='none'
+    )
+
+    # Plot Criterion
+    dmy_idx = np.arange(len(r_mean_avg))
+    locs = np.greater_equal(r_mean_avg, rsquared_crit)
+    if np.sum(locs) > 0:
+        after_idx = dmy_idx[locs]
+        after_idx = after_idx[0]
+        before_idx = after_idx - 1
+        segment_rise = r_mean_avg[after_idx] - r_mean_avg[before_idx]
+        segment_run = n_trial_avg[after_idx] - n_trial_avg[before_idx]
+        segment_slope = segment_rise / segment_run
+        xg = np.arange(segment_run, dtype=np.int)
+        yg = segment_slope * xg + r_mean_avg[before_idx]
 
         locs2 = np.greater_equal(yg, rsquared_crit)
         trial_thresh = xg[locs2]
@@ -1075,7 +1198,13 @@ def plot_exp2_condition(
 
 
 if __name__ == "__main__":
-    # fp_results = Path('/Users/bdroads/Projects/psiz-app/results')
-    # fp_results = Path('/home/brett/projects/psiz-app/results')
-    fp_results = Path('/home/brett/Projects/psiz-app.git/results')
+    # Specify the path to a folder where you would like to store all your
+    # results by change the following line. For example,
+    #  fp_custom = Path('/home/results').
+    fp_custom = None
+    # to use.
+    if fp_custom is not None:
+        fp_results = fp_custom
+    else:
+        fp_results = Path('/home/brett/projects/psiz-app/results')
     main(fp_results)

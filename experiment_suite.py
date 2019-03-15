@@ -66,13 +66,13 @@ def main(fp_results):
         fp_exp0_domain = fp_results / Path('exp_0/{0:s}'.format(domain))
         fp_exp1_domain = fp_results / Path('exp_1/{0:s}'.format(domain))
         fp_exp2_domain = fp_results / Path('exp_2/{0:s}'.format(domain))
-        
+
         # Run each experiment.
         run_exp_0(domain, fp_exp0_domain)
         run_exp_1(domain, fp_exp0_domain, fp_exp1_domain)
         run_exp_2(domain, fp_exp0_domain, fp_exp2_domain)
     fp_exp3 = fp_results / Path('exp_3')
-    run_exp_3(domain, fp_exp3)
+    # run_exp_3(domain, fp_exp3)
 
     # Visualize Experiment 1 Results.
     fp_cv = fp_results / Path('exp_1/{0:s}'.format(domain))
@@ -98,7 +98,7 @@ def main(fp_results):
     visualize_exp_3(data_r8c2_g1, data_r8c2_g2, fp_figure_exp3)
 
 
-def run_exp_0(domain, freeze_options, fp_exp0_domain):
+def run_exp_0(domain, fp_exp0_domain):
     """Run Experiment 0."""
     # Settings.
     freeze_options = {'theta': {'rho': 2., 'tau': 1.}}
@@ -112,7 +112,7 @@ def run_exp_0(domain, freeze_options, fp_exp0_domain):
         dataset_name = 'birds-16'
     elif domain == 'rocks':
         dataset_name = 'rocks_Nosofsky_etal_2016'
-    (obs, catalog) = datasets.load_dataset(dataset_name)
+    (obs, catalog) = datasets.load_dataset(dataset_name, is_hosted=True)
 
     np.random.seed(123)
     # Infer 2D solution for visualization purposes.
@@ -149,7 +149,7 @@ def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
         dataset_name = 'birds-16'
     elif domain == 'rocks':
         dataset_name = 'rocks_Nosofsky_etal_2016'
-    (obs, catalog) = datasets.load_dataset(dataset_name)
+    (obs, catalog) = datasets.load_dataset(dataset_name, is_hosted=True)
 
     # Instantiate the balanced k-fold cross-validation object.
     skf = StratifiedKFold(n_splits=n_fold, shuffle=True, random_state=723)
@@ -750,8 +750,6 @@ def simulate_run_random_existing(
     # Define expert agent based on true embedding.
     agent_expert = Agent(emb_true, group_id=1)
 
-    # Expert similarity matrix associated with true embedding.
-    
     def sim_func_true_novice(z_q, z_ref):
         return emb_true.similarity(z_q, z_ref, group_id=0)
     simmat_novice_true = similarity_matrix(
@@ -953,6 +951,16 @@ def visualize_exp_1(fp_cv, fp_figure=None):
 def print_ttest(m1, m2, x1, x2):
     [t, p] = stats.ttest_ind(x1, x2)
     df = len(x1) - 1
+    print(
+        '{0} | M = {1:.2f}, SD = {2:.2f}'.format(
+            m1, np.mean(x1), np.std(x1)
+        )
+    )
+    print(
+        '{0} | M = {1:.2f}, SD = {2:.2f}'.format(
+            m2, np.mean(x2), np.std(x2)
+        )
+    )
     print(
         '{0}:{1} | t({2}) = {3:.2f}, p = {4:.2f}'.format(
             m1, m2, df, t, p

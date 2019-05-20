@@ -163,12 +163,36 @@ def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
     split_list = list(skf.split(obs.stimulus_set, obs.config_idx, obs.agent_id))
     n_fold = skf.get_n_splits()
 
+    # Interval
+    # emb = Interval(catalog.n_stimuli, n_dim=3, n_group=1)
+    # freeze_options = {
+    #     'theta': {
+    #         'rho': 2
+    #     }
+    # }
+    # emb.freeze(freeze_options=freeze_options)
+    # emb.fit(obs, n_restart=10, verbose=3)
+    # print(emb.theta)
+    # visualize.visualize_embedding_static(
+    #     emb.z['value'], class_vec=catalog.stimuli.class_id.values,
+    #     classes=catalog.class_label,
+    # )
+    fp_model = fp_exp1_domain / Path('Interval')
+    freeze_options = {
+        'theta': {
+            'rho': 2
+        }
+    }
+    loss = embedding_cv(
+        split_list, obs, Interval, catalog.n_stimuli, freeze_options)
+    pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
+
     # Exponential family.
-    # fp_model = fp_exp1_domain / Path('Exponential')
-    # freeze_options = {}
-    # loss = embedding_cv(
-    #     split_list, obs, Exponential, catalog.n_stimuli, freeze_options)
-    # pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
+    fp_model = fp_exp1_domain / Path('Exponential')
+    freeze_options = {}
+    loss = embedding_cv(
+        split_list, obs, Exponential, catalog.n_stimuli, freeze_options)
+    pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
 
     # Gaussian family.
     # fp_model = fp_exp1_domain / Path('Gaussian')
@@ -197,42 +221,18 @@ def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
     # pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
 
     # Heavy-tailed family.
-    # fp_model = fp_exp1_domain / Path('HeavyTailed')
-    # freeze_options = {}
-    # loss = embedding_cv(
-    #     split_list, obs, HeavyTailed, catalog.n_stimuli, freeze_options)
-    # pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
+    fp_model = fp_exp1_domain / Path('HeavyTailed')
+    freeze_options = {}
+    loss = embedding_cv(
+        split_list, obs, HeavyTailed, catalog.n_stimuli, freeze_options)
+    pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
 
     # Student-t family.
-    # fp_model = fp_exp1_domain / Path('StudentsT')
-    # freeze_options = {}
-    # loss = embedding_cv(
-    #     split_list, obs, StudentsT, catalog.n_stimuli, freeze_options)
-    # pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
-
-    # Interval
-    emb = Interval(catalog.n_stimuli, n_dim=3, n_group=1)
-    freeze_options = {
-        'theta': {
-            'rho': 2
-        }
-    }
-    emb.freeze(freeze_options=freeze_options)
-    emb.fit(obs, n_restart=10, verbose=3)
-    print(emb.theta)
-    visualize.visualize_embedding_static(
-        emb.z['value'], class_vec=catalog.stimuli.class_id.values,
-        classes=catalog.class_label,
-    )
-    # fp_model = fp_exp1_domain / Path('Interval')
-    # freeze_options = {
-    #     'theta': {
-    #         'rho': 2
-    #     }
-    # }
-    # loss = embedding_cv(
-    #     split_list, obs, Interval, catalog.n_stimuli, freeze_options)
-    # pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
+    fp_model = fp_exp1_domain / Path('StudentsT')
+    freeze_options = {}
+    loss = embedding_cv(
+        split_list, obs, StudentsT, catalog.n_stimuli, freeze_options)
+    pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
 
 
 def run_exp_2(domain, fp_exp0_domain, fp_exp2_domain):

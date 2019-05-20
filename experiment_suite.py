@@ -172,14 +172,26 @@ def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
 
     # Gaussian family.
     # fp_model = fp_exp1_domain / Path('Gaussian')
-    # freeze_options = dict(theta=dict(rho=2., tau=2., gamma=0.))
+    # freeze_options = {
+    #     'theta': {
+    #         'rho': 2,
+    #         'tau': 2,
+    #         'gamma': 0
+    #     }
+    # }
     # loss = embedding_cv(
     #     split_list, obs, Exponential, catalog.n_stimuli, freeze_options)
     # pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
 
     # Laplacian family.
     # fp_model = fp_exp1_domain / Path('Laplacian')
-    # freeze_options = dict(theta=dict(rho=2., tau=1., gamma=0.))
+    # freeze_options = {
+    #     'theta': {
+    #         'rho': 2,
+    #         'tau': 1,
+    #         'gamma': 0
+    #     }
+    # }
     # loss = embedding_cv(
     #     split_list, obs, Exponential, catalog.n_stimuli, freeze_options)
     # pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
@@ -199,20 +211,28 @@ def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
     # pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
 
     # Interval
-    # emb = Interval(catalog.n_stimuli, n_dim=3, n_group=1)
-    # freeze_options = dict(theta=dict(rho=2.))
-    # emb.freeze(freeze_options=freeze_options)
-    # emb.fit(obs, n_restart=10, verbose=3)
-    # print(emb.theta)
-    # visualize.visualize_embedding_static(
-    #     emb.z['value'], class_vec=catalog.stimuli.class_id.values,
-    #     classes=catalog.class_label,
-    # )
-    fp_model = fp_exp1_domain / Path('Interval')
-    freeze_options = dict(theta=dict(rho=2.))
-    loss = embedding_cv(
-        split_list, obs, Interval, catalog.n_stimuli, freeze_options)
-    pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
+    emb = Interval(catalog.n_stimuli, n_dim=3, n_group=1)
+    freeze_options = {
+        'theta': {
+            'rho': 2
+        }
+    }
+    emb.freeze(freeze_options=freeze_options)
+    emb.fit(obs, n_restart=10, verbose=3)
+    print(emb.theta)
+    visualize.visualize_embedding_static(
+        emb.z['value'], class_vec=catalog.stimuli.class_id.values,
+        classes=catalog.class_label,
+    )
+    # fp_model = fp_exp1_domain / Path('Interval')
+    # freeze_options = {
+    #     'theta': {
+    #         'rho': 2
+    #     }
+    # }
+    # loss = embedding_cv(
+    #     split_list, obs, Interval, catalog.n_stimuli, freeze_options)
+    # pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
 
 
 def run_exp_2(domain, fp_exp0_domain, fp_exp2_domain):
@@ -418,11 +438,13 @@ def evaluate_fold(
     obs_train = obs.subset(train_index)
     # Select dimensionality.
     n_dim = suggest_dimensionality(
-        obs_train, embedding_constructor, n_stimuli, n_restart=n_restart_dim)
+        obs_train, embedding_constructor, n_stimuli, n_restart=n_restart_dim,
+        freeze_options=freeze_options
+    )
     # Instantiate model.
     embedding_model = embedding_constructor(n_stimuli, n_dim, n_group)
     if len(freeze_options) > 0:
-        embedding_model.freeze(**freeze_options)
+        embedding_model.freeze(freeze_options=freeze_options)
     # Fit model using training data.
     J_train = embedding_model.fit(obs_train, n_restart=n_restart_fit)
 

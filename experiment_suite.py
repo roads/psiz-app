@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 import pickle
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
-from psiz.models import Exponential, HeavyTailed, StudentsT, Interval, load_embedding
+from psiz.models import Linear, Exponential, HeavyTailed, StudentsT, load_embedding
 from psiz.dimensionality import suggest_dimensionality
 from psiz.simulate import Agent
 from psiz.generator import RandomGenerator, ActiveGenerator
@@ -69,7 +69,7 @@ def main(fp_results):
 
         # Run each experiment.
         # run_exp_0(domain, fp_exp0_domain) TODO
-        run_exp_1(domain, fp_exp0_domain, fp_exp1_domain)
+        # run_exp_1(domain, fp_exp0_domain, fp_exp1_domain)
         # run_exp_2(domain, fp_exp0_domain, fp_exp2_domain) 
     fp_exp3 = fp_results / Path('exp_3')
     # run_exp_3(domain, fp_exp3)
@@ -79,18 +79,18 @@ def main(fp_results):
     # fp_figure_exp1 = fp_results / Path('exp_1/{0:s}/exp1.pdf'.format(domain))
     # visualize_exp_1(fp_cv, fp_figure_exp1)
 
-    # # Visualize Experiment 2 Results.
-    # fp_data_r2c1 = fp_results / Path('exp_2/{0:s}/r2c1/r2c1_data.p'.format(domain))
-    # fp_data_r8c2 = fp_results / Path('exp_2/{0:s}/r8c2/r8c2_data.p'.format(domain))
-    # fp_data_a8c2 = fp_results / Path('exp_2/{0:s}/a8c2/a8c2_data.p'.format(domain))
-    # fp_data_h8c2 = fp_results / Path('exp_2/{0:s}/h8c2/h8c2_913_data.p'.format(domain))
-    # fp_figure_exp2 = fp_results / Path('exp_2/{0:s}/exp2.pdf'.format(domain))
-    # data_r2c1 = pickle.load(open(fp_data_r2c1, 'rb'))
-    # data_r8c2 = pickle.load(open(fp_data_r8c2, 'rb'))
-    # data_a8c2 = pickle.load(open(fp_data_a8c2, 'rb'))
-    # data_h8c2 = pickle.load(open(fp_data_h8c2, 'rb'))
-    # # visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure_exp2)
+    # Visualize Experiment 2 Results.
+    fp_data_r2c1 = fp_results / Path('exp_2/{0:s}/r2c1/r2c1_data.p'.format(domain))
+    fp_data_r8c2 = fp_results / Path('exp_2/{0:s}/r8c2/r8c2_data.p'.format(domain))
+    fp_data_a8c2 = fp_results / Path('exp_2/{0:s}/a8c2/a8c2_data.p'.format(domain))
+    fp_figure_exp2 = fp_results / Path('exp_2/{0:s}/exp2.pdf'.format(domain))
+    data_r2c1 = pickle.load(open(fp_data_r2c1, 'rb'))
+    data_r8c2 = pickle.load(open(fp_data_r8c2, 'rb'))
+    data_a8c2 = pickle.load(open(fp_data_a8c2, 'rb'))
+    visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure_exp2)
     # # TODO
+    # fp_data_h8c2 = fp_results / Path('exp_2/{0:s}/h8c2/h8c2_913_data.p'.format(domain))
+    # data_h8c2 = pickle.load(open(fp_data_h8c2, 'rb'))
     # fp_figure_exp2_plus = fp_results / Path('exp_2/{0:s}/exp2_plus.pdf'.format(domain))
     # visualize_exp_2_plus(data_r2c1, data_r8c2, data_a8c2, data_h8c2, fp_figure_exp2_plus)
 
@@ -157,6 +157,7 @@ def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
     (obs, catalog) = datasets.load_dataset(dataset_name, is_hosted=True)
 
     # Instantiate the balanced k-fold cross-validation object.
+    np.random.seed(seed=4352)
     # skf = StratifiedKFold(n_splits=n_fold, shuffle=True, random_state=723)
     # split_list = list(skf.split(obs.stimulus_set, obs.config_idx))
     skf = GroupKFold(n_splits=n_fold)
@@ -390,7 +391,8 @@ def run_exp_3(domain, fp_exp3):
     )
 
 
-def embedding_cv(split_list, obs, embedding_constructor, n_stimuli, freeze_options):
+def embedding_cv(
+        split_list, obs, embedding_constructor, n_stimuli, freeze_options):
     """Embedding cross-validation procedure."""
     # Cross-validation settings.
     verbose = 2
@@ -398,7 +400,6 @@ def embedding_cv(split_list, obs, embedding_constructor, n_stimuli, freeze_optio
     J_train = np.empty((n_fold))
     J_test = np.empty((n_fold))
 
-    # loaded_fold = lambda i_fold: evaluate_fold(i_fold, split_list, displays, display_info, embedding_constructor, n_stimuli, freeze_options, verbose)
     loaded_fold = partial(
         evaluate_fold, split_list=split_list, obs=obs,
         embedding_constructor=embedding_constructor, n_stimuli=n_stimuli,
@@ -412,11 +413,13 @@ def embedding_cv(split_list, obs, embedding_constructor, n_stimuli, freeze_optio
 
     J_train = []
     J_test = []
+    n_dim = []
     for i_fold in fold_list:
         J_train.append(results[i_fold][0])
         J_test.append(results[i_fold][1])
+        n_dim.append(results[i_fold][2])
 
-    return {'train': J_train, 'test': J_test}
+    return {'train': J_train, 'test': J_test, 'n_dim': n_dim}
 
 
 def evaluate_fold(
@@ -441,6 +444,9 @@ def evaluate_fold(
         obs_train, embedding_constructor, n_stimuli, n_restart=n_restart_dim,
         freeze_options=freeze_options
     )
+    if verbose > 1:
+        print("        Suggested dimensionality: {0}".format(n_dim))
+
     # Instantiate model.
     embedding_model = embedding_constructor(n_stimuli, n_dim, n_group)
     if len(freeze_options) > 0:
@@ -452,7 +458,7 @@ def evaluate_fold(
     obs_test = obs.subset(test_index)
     J_test = embedding_model.evaluate(obs_test)
 
-    return (J_train, J_test)
+    return (J_train, J_test, n_dim)
 
 
 def simulate_multiple_runs(
@@ -1069,8 +1075,8 @@ def simulate_run_random_existing(
 def visualize_exp_1(fp_cv, fp_figure=None):
     """Plot results."""
     # 'Gaussian', 'Laplacian', 'StudentsT'
-    model_list = ['Exponential', 'HeavyTailed', 'StudentsT']
-    pretty_list = ['Exponential', 'Heavy-Tailed', 'Student-t']
+    model_list = ['Linear', 'Exponential', 'HeavyTailed', 'StudentsT']
+    pretty_list = ['Linear', 'Exponential', 'Heavy-Tailed', 'Student-t']
     n_model = len(model_list)
 
     train_mu = np.empty(n_model)
@@ -1193,20 +1199,29 @@ def visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure=None):
 
     fontdict = {
         'fontsize': 10,
-        'verticalalignment': 'top',
-        'horizontalalignment': 'left'
+        'verticalalignment': 'center',
+        'horizontalalignment': 'center'
     }
 
     fig, ax = plt.subplots(1, 1, figsize=(6, 4))
 
     i_cond = 2
-    plot_exp2_condition(ax, data_r2c1, c_line[i_cond], c_env[i_cond], c_scatter[i_cond], fontdict)
+    plot_exp2_condition(
+        ax, data_r2c1, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
+        fontdict
+    )
 
     i_cond = 0
-    plot_exp2_condition(ax, data_r8c2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond], fontdict)
+    plot_exp2_condition(
+        ax, data_r8c2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
+        fontdict
+    )
 
     i_cond = 1
-    plot_exp2_condition(ax, data_a8c2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond], fontdict)
+    plot_exp2_condition(
+        ax, data_a8c2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
+        fontdict, thin_step=5
+    )
 
     ax.set_ylim(bottom=0., top=1.05)
     ax.set_xlabel('Total Worker Hours')
@@ -1261,16 +1276,28 @@ def visualize_exp_2_plus(data_r2c1, data_r8c2, data_a8c2, data_h8c2, fp_figure=N
     fig, ax = plt.subplots(1, 1, figsize=(6, 4))
 
     i_cond = 2
-    plot_exp2_condition(ax, data_r2c1, c_line[i_cond], c_env[i_cond], c_scatter[i_cond], fontdict)
+    plot_exp2_condition(
+        ax, data_r2c1, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
+        fontdict
+    )
 
     i_cond = 0
-    plot_exp2_condition(ax, data_r8c2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond], fontdict)
+    plot_exp2_condition(
+        ax, data_r8c2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
+        fontdict
+    )
 
     i_cond = 1
-    plot_exp2_condition(ax, data_a8c2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond], fontdict)
+    plot_exp2_condition(
+        ax, data_a8c2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
+        fontdict, thin_step=5
+    )
 
     i_cond = 3
-    plot_exp2_condition(ax, data_h8c2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond], fontdict)
+    plot_exp2_condition(
+        ax, data_h8c2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
+        fontdict, thin_step=5
+    )
 
     ax.set_ylim(bottom=0., top=1.05)
     ax.set_xlabel('Total Worker Hours')
@@ -1287,10 +1314,16 @@ def visualize_exp_2_plus(data_r2c1, data_r8c2, data_a8c2, data_h8c2, fp_figure=N
 
 
 def plot_exp2_condition(
-        ax, data, c_line, c_env, c_scatter, fontdict, rsquared_crit=.95):
+        ax, data, c_line, c_env, c_scatter, fontdict, rsquared_crit=.95, thin_step=1):
     """Plot condition."""
     legend_name = data['info']['name']
     results = data['results']
+
+    if 'is_valid' in results:
+        results["is_valid"] = results["is_valid"][0::thin_step, :]
+    results["loss"] = results["loss"][0::thin_step, :]
+    results["n_trial"] = results["n_trial"][0::thin_step, :]
+    results["r_squared"] = results["r_squared"][0::thin_step, :]
 
     time_factor = data['info']['time_s_per_trial'] / (60 * 60)
     n_run = results['n_trial'].shape[1]
@@ -1309,14 +1342,13 @@ def plot_exp2_condition(
     r_mean_min = np.min(r_mask, axis=1)
     r_mean_max = np.max(r_mask, axis=1)
 
-    # semilogx TODO
+    xg = np.log10(time_factor * n_trial_avg)
     ax.plot(
-        time_factor * n_trial_avg, r_mean_avg, '-', color=c_line,
+        xg, r_mean_avg, '-', color=c_line,
         label='{0:s}'.format(legend_name)
-        # label='{0:s} ({1:d})'.format(legend_name, n_run)
     )
     ax.fill_between(
-        time_factor * n_trial_avg, r_mean_min, r_mean_max,
+        xg, r_mean_min, r_mean_max,
         facecolor=c_env, edgecolor='none'
     )
 
@@ -1340,11 +1372,19 @@ def plot_exp2_condition(
         trial_thresh = trial_thresh + n_trial_avg[before_idx]
 
         ax.scatter(
-            time_factor * trial_thresh, r2_thresh, marker='d', color=c_scatter,
-            edgecolors='k')
+            np.log10(time_factor * trial_thresh), r2_thresh, marker='d', color=c_scatter,
+            edgecolors='k'
+        )
         ax.text(
-            time_factor * trial_thresh, r2_thresh + .06, "{0:.1f}".format(time_factor * trial_thresh),
-            fontdict=fontdict)
+            np.log10(time_factor * trial_thresh), r2_thresh + .04,
+            "{0:.1f}".format(time_factor * trial_thresh), fontdict=fontdict
+        )
+    # Major ticks.
+    ax.set_xticks([-1, 0, 1, 2])
+    ax.set_xticklabels([".1", "1", "10", "100"])
+    # Minor ticks.
+    lg = np.hstack((np.arange(.1, 1, .1), np.arange(1, 10, 1), np.arange(10, 100, 10)))
+    ax.set_xticks(np.log10(lg), minor=True)
 
 
 def visualize_exp_3(data_r8c2_g1, data_r8c2_g2, fp_figure=None):

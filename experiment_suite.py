@@ -11,6 +11,7 @@ import itertools
 from pathlib import Path
 import multiprocessing
 from functools import partial
+import statistics as stat
 
 import numpy as np
 from numpy import ma
@@ -22,14 +23,14 @@ import matplotlib.pyplot as plt
 import pickle
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
-from psiz.models import Linear, Exponential, HeavyTailed, StudentsT, load_embedding
+from psiz.models import Linear, Inverse, Exponential, HeavyTailed, StudentsT, load_embedding
 from psiz.dimensionality import suggest_dimensionality
 from psiz.simulate import Agent
 from psiz.generator import RandomGenerator, ActiveGenerator
 from psiz import trials
 from psiz import datasets
 from psiz import visualize
-from psiz.utils import similarity_matrix, matrix_comparison
+from psiz.utils import similarity_matrix, matrix_comparison, assess_convergence
 
 
 def main(fp_results):
@@ -68,7 +69,8 @@ def main(fp_results):
         fp_exp2_domain = fp_results / Path('exp_2/{0:s}'.format(domain))
 
         # Run each experiment.
-        # run_exp_0(domain, fp_exp0_domain) TODO
+        # run_exp0a(domain, fp_exp0_domain)
+        # run_exp_0b(domain, fp_exp0_domain)
         # run_exp_1(domain, fp_exp0_domain, fp_exp1_domain)
         # run_exp_2(domain, fp_exp0_domain, fp_exp2_domain) 
     fp_exp3 = fp_results / Path('exp_3')
@@ -80,14 +82,14 @@ def main(fp_results):
     # visualize_exp_1(fp_cv, fp_figure_exp1)
 
     # Visualize Experiment 2 Results.
-    fp_data_r2c1 = fp_results / Path('exp_2/{0:s}/r2c1/r2c1_data.p'.format(domain))
-    fp_data_r8c2 = fp_results / Path('exp_2/{0:s}/r8c2/r8c2_data.p'.format(domain))
-    fp_data_a8c2 = fp_results / Path('exp_2/{0:s}/a8c2/a8c2_data.p'.format(domain))
-    fp_figure_exp2 = fp_results / Path('exp_2/{0:s}/exp2.pdf'.format(domain))
-    data_r2c1 = pickle.load(open(fp_data_r2c1, 'rb'))
-    data_r8c2 = pickle.load(open(fp_data_r8c2, 'rb'))
-    data_a8c2 = pickle.load(open(fp_data_a8c2, 'rb'))
-    visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure_exp2)
+    # fp_data_r2c1 = fp_results / Path('exp_2/{0:s}/r2c1/r2c1_data.p'.format(domain))
+    # fp_data_r8c2 = fp_results / Path('exp_2/{0:s}/r8c2/r8c2_data.p'.format(domain))
+    # fp_data_a8c2 = fp_results / Path('exp_2/{0:s}/a8c2/a8c2_data.p'.format(domain))
+    # fp_figure_exp2 = fp_results / Path('exp_2/{0:s}/exp2.pdf'.format(domain))
+    # data_r2c1 = pickle.load(open(fp_data_r2c1, 'rb'))
+    # data_r8c2 = pickle.load(open(fp_data_r8c2, 'rb'))
+    # data_a8c2 = pickle.load(open(fp_data_a8c2, 'rb'))
+    # visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure_exp2)
     # # TODO
     # fp_data_h8c2 = fp_results / Path('exp_2/{0:s}/h8c2/h8c2_913_data.p'.format(domain))
     # data_h8c2 = pickle.load(open(fp_data_h8c2, 'rb'))
@@ -103,7 +105,7 @@ def main(fp_results):
     # visualize_exp_3(data_r8c2_g1, data_r8c2_g2, fp_figure_exp3)
 
 
-def run_exp_0(domain, fp_exp0_domain):
+def run_exp0a(domain, fp_exp0_domain):
     """Run Experiment 0."""
     # Settings.
     freeze_options = {'theta': {'rho': 2., 'tau': 1.}}
@@ -130,7 +132,7 @@ def run_exp_0(domain, fp_exp0_domain):
     visualize.visualize_embedding_static(
         emb_true_2d.z['value'], class_vec=catalog.stimuli.class_id.values,
         classes=catalog.class_label,
-        filename=fp_fig_emb_true_2d.absolute().as_posix()
+        filename=fp_fig_emb_true_2d
     )
 
     np.random.seed(123)
@@ -144,10 +146,33 @@ def run_exp_0(domain, fp_exp0_domain):
     emb_true.save(fp_emb_true)
 
 
+def run_exp_0b(domain, fp_exp0_domain):
+    """Run Experiment 0b."""
+    # Settings.
+    fp_probe = fp_exp0_domain / Path('probe.p')
+    fp_fig_probe = fp_exp0_domain / Path('probe.pdf')
+
+    # Load the real observations.
+    if domain == 'birds':
+        dataset_name = 'birds-16'
+    elif domain == 'rocks':
+        dataset_name = 'rocks_Nosofsky_etal_2016'
+    (obs, catalog) = datasets.load_dataset(dataset_name, is_hosted=True)
+
+    converge_data = assess_convergence(
+        obs, Exponential, catalog.n_stimuli, 3, n_partition=10, n_back=3,
+        n_restart=50, verbose=2
+    )
+    pickle.dump(converge_data, open(fp_probe, "wb"))
+    # converge_data = pickle.load(open(fp_probe, 'rb'))
+    visualize.visualize_convergence(converge_data, fp_fig_probe)
+
+
 def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
-    """Run Experiment 0."""
+    """Run Experiment 1."""
     # Settings.
     n_fold = 10
+    i_fold_fit = 0
 
     # Load the real observations.
     if domain == 'birds':
@@ -164,29 +189,41 @@ def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
     split_list = list(skf.split(obs.stimulus_set, obs.config_idx, obs.agent_id))
     n_fold = skf.get_n_splits()
 
-    # Interval
-    # emb = Interval(catalog.n_stimuli, n_dim=3, n_group=1)
+    # Linear
+    # fp_model = fp_exp1_domain / Path('Linear')
     # freeze_options = {
     #     'theta': {
-    #         'rho': 2
+    #         'rho': 2,
+    #         'beta': 1
     #     }
     # }
-    # emb.freeze(freeze_options=freeze_options)
-    # emb.fit(obs, n_restart=10, verbose=3)
-    # print(emb.theta)
-    # visualize.visualize_embedding_static(
-    #     emb.z['value'], class_vec=catalog.stimuli.class_id.values,
-    #     classes=catalog.class_label,
-    # )
-    fp_model = fp_exp1_domain / Path('Interval')
+    # loss = embedding_cv(
+    #     split_list, obs, Linear, catalog.n_stimuli, freeze_options)
+    # pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
+    # n_dim = exp_1_load_dim(fp_model)
+    # (emb, acc) = fit_fold(
+    #     i_fold_fit, split_list, obs, Linear, catalog.n_stimuli,
+    #     n_dim, freeze_options)
+    # emb.save(fp_model / Path("emb.hdf5"))
+    # pickle.dump(acc, open(str(fp_model / Path("acc.p")), "wb"))
+
+    # Inverse
+    fp_model = fp_exp1_domain / Path('Inverse')
     freeze_options = {
         'theta': {
-            'rho': 2
+            'rho': 2,
+            'tau': 1
         }
     }
     loss = embedding_cv(
-        split_list, obs, Interval, catalog.n_stimuli, freeze_options)
+        split_list, obs, Inverse, catalog.n_stimuli, freeze_options)
     pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
+    # n_dim = exp_1_load_dim(fp_model)
+    # (emb, acc) = fit_fold(
+    #     i_fold_fit, split_list, obs, Inverse, catalog.n_stimuli,
+    #     n_dim, freeze_options)
+    # emb.save(fp_model / Path("emb.hdf5"))
+    # pickle.dump(acc, open(str(fp_model / Path("acc.p")), "wb"))
 
     # Exponential family.
     fp_model = fp_exp1_domain / Path('Exponential')
@@ -194,6 +231,12 @@ def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
     loss = embedding_cv(
         split_list, obs, Exponential, catalog.n_stimuli, freeze_options)
     pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
+    # n_dim = exp_1_load_dim(fp_model)
+    # (emb, acc) = fit_fold(
+    #     i_fold_fit, split_list, obs, Exponential, catalog.n_stimuli,
+    #     n_dim, freeze_options)
+    # emb.save(fp_model / Path("emb.hdf5"))
+    # pickle.dump(acc, open(str(fp_model / Path("acc.p")), "wb"))
 
     # Gaussian family.
     # fp_model = fp_exp1_domain / Path('Gaussian')
@@ -227,6 +270,12 @@ def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
     loss = embedding_cv(
         split_list, obs, HeavyTailed, catalog.n_stimuli, freeze_options)
     pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
+    # n_dim = exp_1_load_dim(fp_model)
+    # (emb, acc) = fit_fold(
+    #     i_fold_fit, split_list, obs, HeavyTailed, catalog.n_stimuli,
+    #     n_dim, freeze_options)
+    # emb.save(fp_model / Path("emb.hdf5"))
+    # pickle.dump(acc, open(str(fp_model / Path("acc.p")), "wb"))
 
     # Student-t family.
     fp_model = fp_exp1_domain / Path('StudentsT')
@@ -234,6 +283,30 @@ def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
     loss = embedding_cv(
         split_list, obs, StudentsT, catalog.n_stimuli, freeze_options)
     pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
+    # n_dim = exp_1_load_dim(fp_model)
+    # (emb, acc) = fit_fold(
+    #     i_fold_fit, split_list, obs, StudentsT, catalog.n_stimuli,
+    #     n_dim, freeze_options)
+    # emb.save(fp_model / Path("emb.hdf5"))
+    # pickle.dump(acc, open(str(fp_model / Path("acc.p")), "wb"))
+
+
+def exp_1_load_dim(fp_model):
+    """Load dimensionality estimate."""
+    filepath = fp_model / Path('loss.p')
+    loss = pickle.load(open(str(filepath), "rb"))
+    n_dim = dim_from_list(loss["n_dim"])
+    return n_dim
+
+
+def dim_from_list(dim_list):
+    """Estimate dimensionality from list."""
+    try:
+        n_dim = stat.mode(dim_list),
+        n_dim = n_dim[0]
+    except stat.StatisticsError:
+        n_dim = np.ceil(np.mean(dim_list))
+    return int(n_dim)
 
 
 def run_exp_2(domain, fp_exp0_domain, fp_exp2_domain):
@@ -413,13 +486,17 @@ def embedding_cv(
 
     J_train = []
     J_test = []
+    acc_2c1 = []
+    acc_8c2 = []
     n_dim = []
     for i_fold in fold_list:
         J_train.append(results[i_fold][0])
         J_test.append(results[i_fold][1])
-        n_dim.append(results[i_fold][2])
+        acc_2c1.append(results[i_fold][2])
+        acc_8c2.append(results[i_fold][3])
+        n_dim.append(results[i_fold][4])
 
-    return {'train': J_train, 'test': J_test, 'n_dim': n_dim}
+    return {'train': J_train, 'test': J_test, 'n_dim': n_dim, '2c1': acc_2c1, '8c2': acc_8c2}
 
 
 def evaluate_fold(
@@ -458,7 +535,77 @@ def evaluate_fold(
     obs_test = obs.subset(test_index)
     J_test = embedding_model.evaluate(obs_test)
 
-    return (J_train, J_test, n_dim)
+    # Top N analysis.
+    locs_2c1 = np.equal(obs_test.n_select, 1)
+    obs_test_2c1 = obs_test.subset(locs_2c1)
+
+    locs_8c2 = np.equal(obs_test.n_select, 2)
+    obs_test_8c2 = obs_test.subset(locs_8c2)
+
+    prob_2c1 = embedding_model.outcome_probability(obs_test_2c1)
+    prob_8c2 = embedding_model.outcome_probability(obs_test_8c2)
+
+    acc_2c1 = top_n_accuracy(prob_2c1, 1)
+    acc_8c2 = top_n_accuracy(prob_8c2, 5)
+
+    return (J_train, J_test, acc_2c1, acc_8c2, n_dim, embedding_model)
+
+
+def fit_fold(
+        i_fold, split_list, obs, embedding_constructor, n_stimuli,
+        n_dim, freeze_options, verbose=0):
+    """Fit model to fold."""
+    # Settings.
+    n_restart_fit = 50
+
+    if verbose > 1:
+        print('    Fold: ', i_fold)
+
+    # Instantiate model.
+    n_group = len(np.unique(obs.group_id))
+    emb = embedding_constructor(n_stimuli, n_dim, n_group)
+    if len(freeze_options) > 0:
+        emb.freeze(freeze_options=freeze_options)
+
+    (train_index, test_index) = split_list[i_fold]
+
+    # Train.
+    obs_train = obs.subset(train_index)
+    J_train = emb.fit(obs_train, n_restart=n_restart_fit)
+
+    # Test.
+    obs_test = obs.subset(test_index)
+    J_test = emb.evaluate(obs_test)
+
+    # Top N analysis.
+    locs_2c1 = np.equal(obs_test.n_select, 1)
+    obs_test_2c1 = obs_test.subset(locs_2c1)
+
+    locs_8c2 = np.equal(obs_test.n_select, 2)
+    obs_test_8c2 = obs_test.subset(locs_8c2)
+
+    prob_2c1 = emb.outcome_probability(obs_test_2c1)
+    prob_8c2 = emb.outcome_probability(obs_test_8c2)
+
+    acc_2c1 = top_n_accuracy(prob_2c1, 1)
+    acc_8c2 = top_n_accuracy(prob_8c2, 5)
+    acc = {'2c1': acc_2c1, '8c2': acc_8c2}
+
+    return (emb, acc)
+
+
+def top_n_accuracy(prob, n_top):
+    """Return the top-N accuracy."""
+    n_trial = prob.shape[0]
+
+    acc = np.zeros(n_trial)
+    for i_trial in range(n_trial):
+        sorted_idx = np.argsort(-prob[i_trial, :])
+        top_idx = sorted_idx[0:n_top]
+        if np.sum(np.equal(top_idx, 0)) > 0:
+            acc[i_trial] = 1
+    acc = np.mean(acc)
+    return acc
 
 
 def simulate_multiple_runs(
@@ -614,7 +761,7 @@ def simulate_run_random(
             'is_valid': np.expand_dims(is_valid[0:i_round + 1], axis=1)
         }
         data = {'info': cond_info, 'results': results_temp}
-        pickle.dump(data, open(fp_data_run.absolute().as_posix(), 'wb'))
+        pickle.dump(data, open(fp_data_run, 'wb'))
         obs.save(fp_obs)
         # emb_inferred.save(fp_emb_inf)
 
@@ -754,7 +901,7 @@ def simulate_run_active(
             'is_valid': np.expand_dims(is_valid[0:i_round + 1], axis=1)
         }
         data = {'info': cond_info, 'results': results_temp}
-        pickle.dump(data, open(fp_data_run.absolute().as_posix(), 'wb'))
+        pickle.dump(data, open(fp_data_run, 'wb'))
         obs.save(fp_obs)
         emb_inferred.save(fp_emb_inf)
         if r_squared[i_round] > .91:
@@ -883,7 +1030,7 @@ def simulate_run_hueristic(
             'is_valid': np.expand_dims(is_valid[0:i_round + 1], axis=1)
         }
         data = {'info': cond_info, 'results': results_temp}
-        pickle.dump(data, open(fp_data_run.absolute().as_posix(), 'wb'))
+        pickle.dump(data, open(fp_data_run, 'wb'))
         obs.save(fp_obs)
         emb_inferred.save(fp_emb_inf)
         if r_squared[i_round] > .91:
@@ -1061,7 +1208,7 @@ def simulate_run_random_existing(
             'is_valid': np.expand_dims(is_valid[0:i_round + 1], axis=1)
         }
         data = {'info': cond_info, 'results': results_temp}
-        pickle.dump(data, open(fp_data_run.absolute().as_posix(), 'wb'))
+        pickle.dump(data, open(fp_data_run, 'wb'))
 
     results = {
         'n_trial': np.expand_dims(n_trial, axis=1),
@@ -1074,101 +1221,196 @@ def simulate_run_random_existing(
 
 def visualize_exp_1(fp_cv, fp_figure=None):
     """Plot results."""
-    # 'Gaussian', 'Laplacian', 'StudentsT'
-    model_list = ['Linear', 'Exponential', 'HeavyTailed', 'StudentsT']
-    pretty_list = ['Linear', 'Exponential', 'Heavy-Tailed', 'Student-t']
-    n_model = len(model_list)
+    # Settings.
+    model_list = ['Inverse', 'Exponential', 'HeavyTailed', 'StudentsT']
+    pretty_list = ['Inverse', 'Exponential', 'Heavy-Tailed', 'Student-t']
+    # Source
+    rgb1 = np.array((0.0, 0.0, 0.5312, 1.0))
+    rgb2 = np.array((1.0, 0.8125, 0.0, 1.0))
+    rgb3 = np.array((0.5, 0.0, 0.0, 1.0))
+    # Lighter version.
+    color_scale = .4  # Lower scale yeilds lighter colors.
+    rgb1_light = 1 - (color_scale * (1 - rgb1))
+    rgb2_light = 1 - (color_scale * (1 - rgb2))
+    rgb3_light = 1 - (color_scale * (1 - rgb3))
+    fontdict = {
+        'fontsize': 12,
+        'verticalalignment': 'center',
+        'horizontalalignment': 'center',
+        'fontweight': 'bold'
+    }
 
+    n_model = len(model_list)
     train_mu = np.empty(n_model)
     train_se = np.empty(n_model)
     test_mu = np.empty(n_model)
-    test_se = np.empty(n_model)
+    test_sem = np.empty(n_model)
     test_sd = np.empty(n_model)
+
+    acc_2c1_mu = np.empty(n_model)
+    acc_2c1_sem = np.empty(n_model)
+    acc_8c2_mu = np.empty(n_model)
+    acc_8c2_sem = np.empty(n_model)
+
     loss_all = []
+    acc_2c1_all = []
+    acc_8c2_all = []
     for i_model, model_name in enumerate(model_list):
         filepath = fp_cv / Path(model_name, 'loss.p')
         loss = pickle.load(open(str(filepath), "rb"))
-        loss_all.append(loss)
+        loss_all.append(loss['test'])
+        acc_2c1_all.append(loss['2c1'])
+        acc_8c2_all.append(loss['8c2'])
 
         train_mu[i_model] = np.mean(loss['train'])
         train_se[i_model] = stats.sem(loss['train'])
 
         test_mu[i_model] = np.mean(loss['test'])
-        test_se[i_model] = stats.sem(loss['test'])
+        test_sem[i_model] = stats.sem(loss['test'])
         test_sd[i_model] = np.std(loss['test'])
+        ndim_mode = dim_from_list(loss["n_dim"])
+
+        acc_2c1_mu[i_model] = np.mean(loss['2c1'])
+        acc_2c1_sem[i_model] = stats.sem(loss['2c1'])
+
+        acc_8c2_mu[i_model] = np.mean(loss['8c2'])
+        acc_8c2_sem[i_model] = stats.sem(loss['8c2'])
+
         print(
-            '{0:s} | M={1:.2f}, SD={2:.2f}'.format(
-                model_name, test_mu[i_model], test_sd[i_model]
+            '{0:s} n_dim | mode={1}, mean={2}'.format(
+                model_name, ndim_mode, np.mean(loss["n_dim"])
             )
         )
+    print('\n')
 
-    print_ttest(
-        model_list[0], model_list[1],
-        loss_all[0]['test'], loss_all[1]['test']
-    )
-    print_ttest(
-        model_list[0], model_list[2],
-        loss_all[0]['test'], loss_all[2]['test']
-    )
-    print_ttest(
-        model_list[1], model_list[2],
-        loss_all[1]['test'], loss_all[2]['test']
-    )
-
-    ind = np.arange(n_model)
+    complete_pairwise_ttest(model_list, loss_all)
+    complete_pairwise_ttest(model_list, acc_2c1_all)
+    complete_pairwise_ttest(model_list, acc_8c2_all)
 
     # Determine the maximum and minimum y values in the figure.
-    ymin = np.min(np.stack((train_mu - train_se, test_mu - test_se), axis=0))
-    ymax = np.max(np.stack((train_mu + train_se, test_mu + test_se), axis=0))
+    ymin = np.min(np.stack((train_mu - train_se, test_mu - test_sem), axis=0))
+    ymax = np.max(np.stack((train_mu + train_se, test_mu + test_sem), axis=0))
     ydiff = ymax - ymin
     ypad = ydiff * .1
+    limits_loss = [ymin - ypad, ymax + ypad]
 
-    # width = 0.35       # the width of the bars
+    fig, ax = plt.subplots(figsize=(6.5, 3))
+    xg = np.arange(n_model)
+
+    # Loss.
     width = 0.75
-
-    fig, ax = plt.subplots()
-    # rects1 = ax.bar(ind, train_mu, width, color='r', yerr=train_se)
-    # rects2 = ax.bar(ind + width, test_mu, width, color='b', yerr=test_se)
-    error_kw = {'linewidth': 2, 'ecolor': 'r'}
-    rects2 = ax.bar(ind, test_mu, width, color='b', yerr=test_se, error_kw=error_kw)
-
-    # add some text for labels, title and axes ticks
+    ax = plt.subplot(1, 2, 1)
+    color = rgb1
+    error_kw = {'linewidth': 4, 'ecolor': rgb1_light}
+    rects2 = ax.bar(
+        xg, test_mu, yerr=test_sem,
+        width=width, color='b', error_kw=error_kw
+    )
     ax.set_ylabel('Loss')
-    ax.set_title('Average Validation Loss')
-    ax.set_xticks(ind)
-    # ax.set_xticks(ind + width / 2)
-    ax.set_xticklabels(pretty_list)
+    ax.set_title('Validation Loss')
+    ax.set_xticks(xg)
+    ax.set_xticklabels(pretty_list, rotation=45)
+    ax.set_ylim(limits_loss)
+    ax.text(
+        -.2, 1.07, "(A)", fontdict=fontdict,
+        horizontalalignment='center', verticalalignment='center',
+        transform=ax.transAxes
+    )
 
-    # ax.legend((rects1[0], rects2[0]), ('Train', 'Test'), loc=4)
-    axes = plt.gca()
-    # axes.set_xlim([xmin,xmax])
-    axes.set_ylim([ymin - ypad, ymax + ypad])
+    # Top-N Accuracy
+    width = 0.35
+    ax = plt.subplot(1, 2, 2)
+    color = rgb2
+    error_kw = {'linewidth': 6, 'ecolor': rgb2_light}
+    rects1 = ax.bar(
+        xg - width/2, acc_2c1_mu, yerr=acc_2c1_sem,
+        width=width, color=color, error_kw=error_kw, label='Top-1 2-choose-1'
+    )
+    color = rgb3
+    error_kw = {'linewidth': 6, 'ecolor': rgb3_light}
+    rects2 = ax.bar(
+        xg + width/2, acc_8c2_mu, yerr=acc_8c2_sem,
+        width=width, color=color, error_kw=error_kw, label='Top-5 8-choose-2'
+    )
+    ax.set_ylabel('Top-N Accuracy')
+    ax.set_title('Top-N Validation Accuracy')
+    ax.set_xticks(xg)
+    ax.set_xticklabels(pretty_list, rotation=45)
+    ax.legend(loc=3, framealpha=0.95)
+    ax.set_ylim([.5, .8])
+    ax.text(
+        -0.2, 1.07, "(B)", fontdict=fontdict,
+        horizontalalignment='center', verticalalignment='center',
+        transform=ax.transAxes
+    )
 
+    plt.tight_layout()
     if fp_figure is None:
         plt.show()
     else:
-        plt.savefig(fp_figure.absolute().as_posix(), format='pdf', bbox_inches="tight", dpi=100)
+        plt.savefig(os.fspath(fp_figure), format='pdf', bbox_inches="tight", dpi=100)
 
 
-def print_ttest(m1, m2, x1, x2):
+def complete_pairwise_ttest(model_list, val, alpha=.05):
+    """Perform all possible pairwise comparisons."""
+    n_model = len(model_list)
+
+    for i_model in range(n_model):
+        print(
+            '{0:s} | M={1:.2f}, SD={2:.2f}'.format(
+                model_list[i_model],
+                np.mean(val[i_model]),
+                np.std(val[i_model])
+            )
+        )
+
+    # Pairwise test.
+    comb_list = list(itertools.combinations(range(n_model), 2))
+    comb_list = np.array(comb_list)
+    n_comb = len(comb_list)
+
+    # Adjusted alpha value.
+    alpha_adj = .05 / n_comb
+    print("Bonferroni corrected alpha: {0:.4}".format(alpha_adj))
+
+    for i_comb in range(n_comb):
+        idx_a = comb_list[i_comb, 0]
+        idx_b = comb_list[i_comb, 1]
+        print_ttest(
+            model_list[idx_a], model_list[idx_b],
+            val[idx_a], val[idx_b],
+            alpha_adj
+        )
+    print('\n')
+
+
+def print_ttest(m1, m2, x1, x2, alpha, verbose=0):
     """Print t-test results in APA format."""
     [t, p] = stats.ttest_ind(x1, x2)
-    df = len(x1) - 1
-    print(
-        '{0} | M = {1:.2f}, SD = {2:.2f}'.format(
-            m1, np.mean(x1), np.std(x1)
+    is_significant = p < alpha
+    if is_significant:
+        msg = "SIGNIFICANT"
+    else:
+        msg = ""
+
+    if (verbose > 0) or is_significant:
+        df = len(x1) - 1
+        print(
+            '{0} | M = {1:.2f}, SD = {2:.2f}'.format(
+                m1, np.mean(x1), np.std(x1)
+            )
         )
-    )
-    print(
-        '{0} | M = {1:.2f}, SD = {2:.2f}'.format(
-            m2, np.mean(x2), np.std(x2)
+        print(
+            '{0} | M = {1:.2f}, SD = {2:.2f}'.format(
+                m2, np.mean(x2), np.std(x2)
+            )
         )
-    )
-    print(
-        '{0}:{1} | t({2}) = {3:.2f}, p = {4:.2f}'.format(
-            m1, m2, df, t, p
+        print(
+            '{0}:{1} | t({2}) = {3:.2f}, p = {4:.2f} {5}'.format(
+                m1, m2, df, t, p, msg
+            )
         )
-    )
+        print('\n')
 
 
 def visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure=None):
@@ -1233,8 +1475,8 @@ def visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure=None):
         plt.show()
     else:
         plt.savefig(
-            fp_figure.absolute().as_posix(), format='pdf',
-            bbox_inches="tight", dpi=100)
+            os.fspath(fp_figure), format='pdf', bbox_inches="tight", dpi=100
+        )
 
 
 def visualize_exp_2_plus(data_r2c1, data_r8c2, data_a8c2, data_h8c2, fp_figure=None):
@@ -1309,8 +1551,8 @@ def visualize_exp_2_plus(data_r2c1, data_r8c2, data_a8c2, data_h8c2, fp_figure=N
         plt.show()
     else:
         plt.savefig(
-            fp_figure.absolute().as_posix(), format='pdf',
-            bbox_inches="tight", dpi=100)
+            os.fspath(fp_figure), format='pdf', bbox_inches="tight", dpi=100
+        )
 
 
 def plot_exp2_condition(
@@ -1443,8 +1685,8 @@ def visualize_exp_3(data_r8c2_g1, data_r8c2_g2, fp_figure=None):
         plt.show()
     else:
         plt.savefig(
-            fp_figure.absolute().as_posix(), format='pdf',
-            bbox_inches="tight", dpi=100)
+            os.fspath(fp_figure), format='pdf', bbox_inches="tight", dpi=100
+        )
 
 
 def plot_exp3_condition(

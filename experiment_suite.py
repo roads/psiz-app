@@ -77,9 +77,9 @@ def main(fp_results):
     # run_exp_3(domain, fp_exp3)
 
     # Visualize Experiment 1 Results.
-    # fp_cv = fp_results / Path('exp_1/{0:s}'.format(domain))
-    # fp_figure_exp1 = fp_results / Path('exp_1/{0:s}/exp1.pdf'.format(domain))
-    # visualize_exp_1(fp_cv, fp_figure_exp1)
+    fp_cv = fp_results / Path('exp_1/{0:s}'.format(domain))
+    fp_figure_exp1 = fp_results / Path('exp_1/{0:s}/exp1.pdf'.format(domain))
+    visualize_exp_1(fp_cv, fp_figure_exp1)
 
     # Visualize Experiment 2 Results.
     # fp_data_r2c1 = fp_results / Path('exp_2/{0:s}/r2c1/r2c1_data.p'.format(domain))
@@ -200,12 +200,6 @@ def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
     # loss = embedding_cv(
     #     split_list, obs, Linear, catalog.n_stimuli, freeze_options)
     # pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
-    # n_dim = exp_1_load_dim(fp_model)
-    # (emb, acc) = fit_fold(
-    #     i_fold_fit, split_list, obs, Linear, catalog.n_stimuli,
-    #     n_dim, freeze_options)
-    # emb.save(fp_model / Path("emb.hdf5"))
-    # pickle.dump(acc, open(str(fp_model / Path("acc.p")), "wb"))
 
     # Inverse
     fp_model = fp_exp1_domain / Path('Inverse')
@@ -218,12 +212,6 @@ def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
     loss = embedding_cv(
         split_list, obs, Inverse, catalog.n_stimuli, freeze_options)
     pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
-    # n_dim = exp_1_load_dim(fp_model)
-    # (emb, acc) = fit_fold(
-    #     i_fold_fit, split_list, obs, Inverse, catalog.n_stimuli,
-    #     n_dim, freeze_options)
-    # emb.save(fp_model / Path("emb.hdf5"))
-    # pickle.dump(acc, open(str(fp_model / Path("acc.p")), "wb"))
 
     # Exponential family.
     fp_model = fp_exp1_domain / Path('Exponential')
@@ -231,12 +219,6 @@ def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
     loss = embedding_cv(
         split_list, obs, Exponential, catalog.n_stimuli, freeze_options)
     pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
-    # n_dim = exp_1_load_dim(fp_model)
-    # (emb, acc) = fit_fold(
-    #     i_fold_fit, split_list, obs, Exponential, catalog.n_stimuli,
-    #     n_dim, freeze_options)
-    # emb.save(fp_model / Path("emb.hdf5"))
-    # pickle.dump(acc, open(str(fp_model / Path("acc.p")), "wb"))
 
     # Gaussian family.
     # fp_model = fp_exp1_domain / Path('Gaussian')
@@ -270,12 +252,6 @@ def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
     loss = embedding_cv(
         split_list, obs, HeavyTailed, catalog.n_stimuli, freeze_options)
     pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
-    # n_dim = exp_1_load_dim(fp_model)
-    # (emb, acc) = fit_fold(
-    #     i_fold_fit, split_list, obs, HeavyTailed, catalog.n_stimuli,
-    #     n_dim, freeze_options)
-    # emb.save(fp_model / Path("emb.hdf5"))
-    # pickle.dump(acc, open(str(fp_model / Path("acc.p")), "wb"))
 
     # Student-t family.
     fp_model = fp_exp1_domain / Path('StudentsT')
@@ -283,12 +259,6 @@ def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
     loss = embedding_cv(
         split_list, obs, StudentsT, catalog.n_stimuli, freeze_options)
     pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
-    # n_dim = exp_1_load_dim(fp_model)
-    # (emb, acc) = fit_fold(
-    #     i_fold_fit, split_list, obs, StudentsT, catalog.n_stimuli,
-    #     n_dim, freeze_options)
-    # emb.save(fp_model / Path("emb.hdf5"))
-    # pickle.dump(acc, open(str(fp_model / Path("acc.p")), "wb"))
 
 
 def exp_1_load_dim(fp_model):
@@ -409,7 +379,7 @@ def run_exp_3(domain, fp_exp3):
     n_group = 2
     freeze_options = {'theta': {'rho': 2., 'tau': 1.}}
     seed_list = [913, 192, 785, 891, 841]
-    
+
     # Define experiment conditions.
     cond_info_r8c2_1g = {
         'name': 'Random 8-choose-2',
@@ -470,8 +440,8 @@ def embedding_cv(
     # Cross-validation settings.
     verbose = 2
     n_fold = len(split_list)
-    J_train = np.empty((n_fold))
-    J_test = np.empty((n_fold))
+    loss_train = np.empty((n_fold))
+    loss_test = np.empty((n_fold))
 
     loaded_fold = partial(
         evaluate_fold, split_list=split_list, obs=obs,
@@ -480,23 +450,23 @@ def embedding_cv(
 
     fold_list = range(n_fold)
     # for i_fold in fold_list:
-    #     (J_train[i_fold], J_test[i_fold]) = loaded_func(i_fold)
+    #     (loss_train[i_fold], loss_test[i_fold]) = loaded_func(i_fold)
     with multiprocessing.Pool() as pool:
         results = pool.map(loaded_fold, fold_list)
 
-    J_train = []
-    J_test = []
+    loss_train = []
+    loss_test = []
     acc_2c1 = []
     acc_8c2 = []
     n_dim = []
     for i_fold in fold_list:
-        J_train.append(results[i_fold][0])
-        J_test.append(results[i_fold][1])
+        loss_train.append(results[i_fold][0])
+        loss_test.append(results[i_fold][1])
         acc_2c1.append(results[i_fold][2])
         acc_8c2.append(results[i_fold][3])
         n_dim.append(results[i_fold][4])
 
-    return {'train': J_train, 'test': J_test, 'n_dim': n_dim, '2c1': acc_2c1, '8c2': acc_8c2}
+    return {'train': loss_train, 'test': loss_test, 'n_dim': n_dim, '2c1': acc_2c1, '8c2': acc_8c2}
 
 
 def evaluate_fold(
@@ -525,57 +495,15 @@ def evaluate_fold(
         print("        Suggested dimensionality: {0}".format(n_dim))
 
     # Instantiate model.
-    embedding_model = embedding_constructor(n_stimuli, n_dim, n_group)
-    if len(freeze_options) > 0:
-        embedding_model.freeze(freeze_options=freeze_options)
-    # Fit model using training data.
-    J_train = embedding_model.fit(obs_train, n_restart=n_restart_fit)
-
-    # Test.
-    obs_test = obs.subset(test_index)
-    J_test = embedding_model.evaluate(obs_test)
-
-    # Top N analysis.
-    locs_2c1 = np.equal(obs_test.n_select, 1)
-    obs_test_2c1 = obs_test.subset(locs_2c1)
-
-    locs_8c2 = np.equal(obs_test.n_select, 2)
-    obs_test_8c2 = obs_test.subset(locs_8c2)
-
-    prob_2c1 = embedding_model.outcome_probability(obs_test_2c1)
-    prob_8c2 = embedding_model.outcome_probability(obs_test_8c2)
-
-    acc_2c1 = top_n_accuracy(prob_2c1, 1)
-    acc_8c2 = top_n_accuracy(prob_8c2, 5)
-
-    return (J_train, J_test, acc_2c1, acc_8c2, n_dim, embedding_model)
-
-
-def fit_fold(
-        i_fold, split_list, obs, embedding_constructor, n_stimuli,
-        n_dim, freeze_options, verbose=0):
-    """Fit model to fold."""
-    # Settings.
-    n_restart_fit = 50
-
-    if verbose > 1:
-        print('    Fold: ', i_fold)
-
-    # Instantiate model.
-    n_group = len(np.unique(obs.group_id))
     emb = embedding_constructor(n_stimuli, n_dim, n_group)
     if len(freeze_options) > 0:
         emb.freeze(freeze_options=freeze_options)
-
-    (train_index, test_index) = split_list[i_fold]
-
-    # Train.
-    obs_train = obs.subset(train_index)
-    J_train = emb.fit(obs_train, n_restart=n_restart_fit)
+    # Fit model using training data.
+    loss_train, loss_val = emb.fit(obs_train, n_restart=n_restart_fit)
 
     # Test.
     obs_test = obs.subset(test_index)
-    J_test = emb.evaluate(obs_test)
+    loss_test = emb.evaluate(obs_test)
 
     # Top N analysis.
     locs_2c1 = np.equal(obs_test.n_select, 1)
@@ -589,9 +517,8 @@ def fit_fold(
 
     acc_2c1 = top_n_accuracy(prob_2c1, 1)
     acc_8c2 = top_n_accuracy(prob_8c2, 5)
-    acc = {'2c1': acc_2c1, '8c2': acc_8c2}
 
-    return (emb, acc)
+    return (loss_train, loss_test, acc_2c1, acc_8c2, n_dim, emb)
 
 
 def top_n_accuracy(prob, n_top):
@@ -670,11 +597,6 @@ def simulate_run(
             emb_true, cond_info, freeze_options, dir_cond, run_id,
             group_id, obs_existing
         )
-    elif cond_info['selection_policy'] == 'heuristic':
-        results_run = simulate_run_hueristic(
-            emb_true, cond_info, freeze_options, dir_cond, run_id,
-            group_id=group_id
-        )
     else:
         raise ValueError(
             'The `selection_policy` {0} is not defined. Must be either '
@@ -736,7 +658,7 @@ def simulate_run_random(
         # Infer embedding.
         init_mode = 'cold'
         include_idx = np.arange(0, n_trial[i_round])
-        loss[i_round] = emb_inferred.fit(
+        loss[i_round], _ = emb_inferred.fit(
             obs.subset(include_idx), n_restart=50, init_mode=init_mode)
         # Compare the inferred model with ground truth by comparing the
         # similarity matrices implied by each model.
@@ -818,7 +740,7 @@ def simulate_run_active(
     emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
     emb_inferred.freeze(freeze_options)
     n_trial[i_round] = obs.n_trial
-    loss[i_round] = emb_inferred.fit(obs, n_restart=50, init_mode='cold')
+    loss[i_round], _ = emb_inferred.fit(obs, n_restart=50, init_mode='cold')
     simmat_infer = similarity_matrix(
         emb_inferred.similarity, emb_inferred.z['value'])
     r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
@@ -849,8 +771,8 @@ def simulate_run_active(
         # Select trials based on expected IG.
         time_start = time.time()
         samples = emb_inferred.posterior_samples(
-            obs, n_final_sample=1000, n_burn=100, thin_step=10)
-        # z_init=samples[:,:,-1]
+            obs, n_final_sample=1000, n_burn=100, thin_step=10
+        )
         elapsed = time.time() - time_start
         print('Posterior | Elapsed time: {0:.2f} m'.format(elapsed / 60))
         emb_inferred.z['value'] = np.median(samples['z'], axis=2)
@@ -858,7 +780,8 @@ def simulate_run_active(
         time_start = time.time()
         active_docket, _ = active_gen.generate(
             cond_info['n_trial_per_round'], emb_inferred, samples,
-            n_query=cond_info['n_query'])
+            n_query=cond_info['n_query']
+        )
         elapsed = time.time() - time_start
         print('Active | Elapsed time: {0:.2f} m'.format(elapsed / 60))
         # Simulate observations.
@@ -871,142 +794,13 @@ def simulate_run_active(
             # Infer new embedding with exact restarts.
             freeze_options = {'z': emb_inferred.z['value']}
             emb_inferred.freeze(freeze_options)
-            loss[i_round] = emb_inferred.fit(
+            loss[i_round], _ = emb_inferred.fit(
                 obs, n_restart=3, init_mode='exact')
             emb_inferred.thaw(['z'])
-            loss[i_round] = emb_inferred.fit(
+            loss[i_round], _ = emb_inferred.fit(
                 obs, n_restart=50, init_mode='cold')
         else:
             loss[i_round] = emb_inferred.evaluate(obs)
-        # Compare the inferred model with ground truth by comparing the
-        # similarity matrices implied by each model.
-        simmat_infer = similarity_matrix(
-            emb_inferred.similarity, emb_inferred.z['value'])
-        r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
-        is_valid[i_round] = True
-        print(
-            'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
-                i_round, int(n_trial[i_round]), loss[i_round],
-                r_squared[i_round],
-                emb_inferred.theta['rho']['value'],
-                emb_inferred.theta['tau']['value'],
-                emb_inferred.theta['beta']['value'],
-                emb_inferred.theta['gamma']['value']
-            )
-        )
-        results_temp = {
-            'n_trial': np.expand_dims(n_trial[0:i_round + 1], axis=1),
-            'loss': np.expand_dims(loss[0:i_round + 1], axis=1),
-            'r_squared': np.expand_dims(r_squared[0:i_round + 1], axis=1),
-            'is_valid': np.expand_dims(is_valid[0:i_round + 1], axis=1)
-        }
-        data = {'info': cond_info, 'results': results_temp}
-        pickle.dump(data, open(fp_data_run, 'wb'))
-        obs.save(fp_obs)
-        emb_inferred.save(fp_emb_inf)
-        if r_squared[i_round] > .91:
-            at_criterion = True
-            print('Reached criterion.')
-
-        if at_criterion:
-            remaining_rounds = remaining_rounds - 1
-
-        if remaining_rounds < 0:
-            break
-
-    results = {
-        'n_trial': np.expand_dims(n_trial, axis=1),
-        'loss': np.expand_dims(loss, axis=1),
-        'r_squared': np.expand_dims(r_squared, axis=1),
-        'is_valid': np.expand_dims(is_valid, axis=1)
-    }
-    return results
-
-
-def simulate_run_hueristic(
-        emb_true, cond_info, freeze_options, dir_cond, run_id, group_id=0):
-    """Simulate heuristic selection progress for a trial configuration.
-
-    Record:
-        n_trial, loss, r^2
-    """
-    # Define filepaths.
-    fp_data_run = dir_cond / Path('{0:s}_{1:s}_data.p'.format(cond_info['prefix'], run_id))
-    fp_obs = dir_cond / Path('{0:s}_{1:s}_obs.hdf5'.format(cond_info['prefix'], run_id))
-    fp_emb_inf = dir_cond / Path('{0:s}_{1:s}_emb_inf.hdf5'.format(cond_info['prefix'], run_id))
-
-    # Define agent based on true embedding.
-    agent = Agent(emb_true)
-
-    # Similarity matrix associated with true embedding.
-    simmat_true = similarity_matrix(
-        emb_true.similarity, emb_true.z['value'])
-
-    # Pre-allocate metrics.
-    n_round = len(np.arange(
-        cond_info['n_trial_initial'],
-        cond_info['n_trial_total'] + 1,
-        cond_info['n_trial_per_round']
-    ))
-    n_trial = np.empty((n_round))
-    r_squared = np.empty((n_round))
-    loss = np.empty((n_round))
-    is_valid = np.zeros((n_round), dtype=bool)
-    at_criterion = False
-    remaining_rounds = 10
-
-    # The first round is seed using a randomly generated docket.
-    i_round = 0
-    rand_gen = RandomGenerator(
-        cond_info['n_reference'], cond_info['n_select'])
-    rand_docket = rand_gen.generate(
-        cond_info['n_trial_initial'], emb_true.n_stimuli)
-    # Simulate similarity judgments.
-    obs = agent.simulate(rand_docket)
-    # Infer initial model.
-    emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
-    emb_inferred.freeze(freeze_options)
-    n_trial[i_round] = obs.n_trial
-    loss[i_round] = emb_inferred.fit(obs, n_restart=50, init_mode='cold')
-    simmat_infer = similarity_matrix(
-        emb_inferred.similarity, emb_inferred.z['value'])
-    r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
-    is_valid[i_round] = True
-    print(
-        'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
-            i_round, int(n_trial[i_round]), loss[i_round],
-            r_squared[i_round],
-            emb_inferred.theta['rho']['value'],
-            emb_inferred.theta['tau']['value'],
-            emb_inferred.theta['beta']['value'],
-            emb_inferred.theta['gamma']['value']
-        )
-    )
-
-    config_list = pd.DataFrame({
-        'n_reference': np.array([8], dtype=np.int32),
-        'n_select': np.array([2], dtype=np.int32),
-        'is_ranked': [True],
-        'n_outcome': np.array([56], dtype=np.int32)
-    })
-    heuristic_gen = HeuristicGenerator(config_list=config_list)
-    # Infer independent models with increasing amounts of data.
-    for i_round in np.arange(1, n_round + 1):
-        # Select next docket.
-        active_docket = heuristic_gen.generate(
-            cond_info['n_trial_per_round'], emb_inferred, obs=obs
-        )
-        # Simulate observations.
-        new_obs = agent.simulate(active_docket)
-        obs = trials.stack([obs, new_obs])
-        n_trial[i_round] = obs.n_trial
-
-        # Infer new embedding.
-        time_start = time.time()
-        loss[i_round] = emb_inferred.fit(obs, n_restart=50)
-        elapsed = time.time() - time_start
-        print('Inference | Elapsed time: {0:.2f} m'.format(elapsed / 60))
-
         # Compare the inferred model with ground truth by comparing the
         # similarity matrices implied by each model.
         simmat_infer = similarity_matrix(
@@ -1145,7 +939,7 @@ def simulate_run_random_existing(
             (obs_existing, obs_expert.subset(include_idx))
         )
 
-        loss[i_round] = emb_inferred.fit(
+        loss[i_round], _ = emb_inferred.fit(
             obs_round, n_restart=50, init_mode=init_mode
         )
         # Compare the inferred model with ground truth by comparing the
@@ -1646,6 +1440,19 @@ def visualize_exp_3(data_r8c2_g1, data_r8c2_g2, fp_figure=None):
     rgb2_light = 1 - (color_scale * (1 - rgb2))
     rgb3_light = 1 - (color_scale * (1 - rgb3))
 
+    fontdict_bold = {
+        'fontsize': 12,
+        'verticalalignment': 'center',
+        'horizontalalignment': 'center',
+        'fontweight': 'bold'
+    }
+    fontdict_white = {
+        'fontsize': 10,
+        'verticalalignment': 'center',
+        'horizontalalignment': 'center',
+        'color': "white"
+    }
+
     c_line = [tuple(rgb1), tuple(rgb3), tuple(rgb2)]
     # c_env = [tuple(rgb1_light), tuple(rgb3_light)]
     c_env = [tuple(rgb1_trans), tuple(rgb3_trans), tuple(rgb2_trans)]
@@ -1661,24 +1468,70 @@ def visualize_exp_3(data_r8c2_g1, data_r8c2_g2, fp_figure=None):
         'horizontalalignment': 'left'
     }
 
-    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
+    fig, ax = plt.subplots(1, 2, figsize=(6, 4))
 
+    ax = plt.subplot(1, 2, 2)
     i_cond = 0
-    plot_exp3_condition(
+    (time_thresh_ind, r2_thresh_ind) = plot_exp3_condition(
         ax, data_r8c2_g1, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
         fontdict, 'Independent'
     )
 
     i_cond = 1
-    plot_exp3_condition(
+    (time_thresh_shared, r2_thresh_shared) = plot_exp3_condition(
         ax, data_r8c2_g2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
         fontdict, 'Shared'
     )
 
     ax.set_ylim(bottom=0., top=1.05)
     ax.set_xlabel('Total Expert Worker Hours')
+    ax.set_xticks([.1, 1, 10])
+    ax.set_xticklabels([.1, 1, 10])
     ax.set_ylabel(r'Pearson $\rho$')
     ax.legend()
+    ax.set_title("Expert Hours")
+    ax.text(
+        -.2, 1.07, "(B)", fontdict=fontdict_bold,
+        horizontalalignment='center', verticalalignment='center',
+        transform=ax.transAxes
+    )
+
+    # Total worker hours.
+    ax = plt.subplot(1, 2, 1)
+    xg = np.array([0, 1])
+    yg_nov = np.array([time_thresh_ind, (3550 * 8.98) / (60 * 60)])
+    # yg_nov = np.array([time_thresh_ind, time_thresh_ind])
+    yg_exp = np.array([time_thresh_ind, time_thresh_shared])
+    # ax.bar(xg, yg_nov, color=rgb2, label="Novice")
+    # ax.bar(0, yg_exp[0], bottom=yg_nov[0], color=rgb1, label="Independent Expert")
+    # ax.bar(1, yg_exp[1], bottom=yg_nov[1], color=rgb3, label="Shared Expert")
+
+    ax.bar(0, yg_nov[0], color=rgb1_light, label="Independent Novice")
+    ax.bar(1, yg_nov[1], color=rgb3_light, label="Shared Novice")
+    ax.bar(0, yg_exp[0], bottom=yg_nov[0], color=rgb1, label="Independent Expert")
+    ax.bar(1, yg_exp[1], bottom=yg_nov[1], color=rgb3, label="Shared Expert")
+
+    ax.set_ylabel('Total Worker Hours')
+    ax.set_xticks([0, 1])
+    ax.set_xticklabels(["Independent", "Shared"])
+    ax.set_title("Total Hours")
+    ax.text(
+        0, yg_nov[0] + .5 * yg_exp[0], "{0:.1f}".format(yg_exp[0]),
+        horizontalalignment='center', verticalalignment='center',
+        fontdict=fontdict_white
+    )
+    ax.text(
+        1, yg_nov[1] + .5 * yg_exp[1], "{0:.1f}".format(yg_exp[1]),
+        horizontalalignment='center', verticalalignment='center',
+        fontdict=fontdict_white
+    )
+    ax.text(
+        -.2, 1.07, "(A)", fontdict=fontdict_bold,
+        horizontalalignment='center', verticalalignment='center',
+        transform=ax.transAxes
+    )
+    ax.legend(loc=3, framealpha=0.95)
+
     plt.tight_layout()
 
     if fp_figure is None:
@@ -1706,9 +1559,9 @@ def plot_exp3_condition(
 
     n_trial_mask = ma.array(results['n_trial'], mask=np.logical_not(is_valid))
     n_trial_avg = np.mean(n_trial_mask, axis=1)
-    
+
     r_mask = ma.array(results['r_squared'], mask=np.logical_not(is_valid))**.5
-    
+
     r_mean_avg = np.mean(r_mask, axis=1)
     r_mean_min = np.min(r_mask, axis=1)
     r_mean_max = np.max(r_mask, axis=1)
@@ -1726,6 +1579,8 @@ def plot_exp3_condition(
     # Plot Criterion
     dmy_idx = np.arange(len(r_mean_avg))
     locs = np.greater_equal(r_mean_avg, rsquared_crit)
+    time_thresh = None
+    r2_thresh = None
     if np.sum(locs) > 0:
         after_idx = dmy_idx[locs]
         after_idx = after_idx[0]
@@ -1741,13 +1596,14 @@ def plot_exp3_condition(
         trial_thresh = trial_thresh[0]
         r2_thresh = yg[trial_thresh]
         trial_thresh = trial_thresh + n_trial_avg[before_idx]
-
+        time_thresh = time_factor * trial_thresh
         ax.scatter(
-            time_factor * trial_thresh, r2_thresh, marker='d', color=c_scatter,
+            time_thresh, r2_thresh, marker='d', color=c_scatter,
             edgecolors='k')
         ax.text(
-            time_factor * trial_thresh, r2_thresh + .06, "{0:.1f}".format(time_factor * trial_thresh),
+            time_thresh, r2_thresh + .06, "{0:.1f}".format(time_factor * trial_thresh),
             fontdict=fontdict)
+        return (time_thresh, r2_thresh)
 
 
 if __name__ == "__main__":

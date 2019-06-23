@@ -132,7 +132,7 @@ def run_exp0a(domain, fp_exp0_domain):
     visualize.visualize_embedding_static(
         emb_true_2d.z['value'], class_vec=catalog.stimuli.class_id.values,
         classes=catalog.class_label,
-        filename=fp_fig_emb_true_2d
+        fname=fp_fig_emb_true_2d
     )
 
     np.random.seed(123)

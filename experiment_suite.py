@@ -72,15 +72,15 @@ def main(fp_results):
         # run_exp0a(domain, fp_exp0_domain)
         # run_exp_0b(domain, fp_exp0_domain)
         # run_exp_1(domain, fp_exp0_domain, fp_exp1_domain)
-        # run_exp_2(domain, fp_exp0_domain, fp_exp2_domain)
+        run_exp_2(domain, fp_exp0_domain, fp_exp2_domain)
 
     fp_exp3 = fp_results / Path('exp_3')
     # run_exp_3(domain, fp_exp3)
 
     # Visualize Experiment 1 Results.
-    fp_cv = fp_results / Path('exp_1/{0:s}'.format(domain))
-    fp_figure_exp1 = fp_results / Path('exp_1/{0:s}/exp1.pdf'.format(domain))
-    visualize_exp_1(fp_cv, fp_figure_exp1)
+    # fp_cv = fp_results / Path('exp_1/{0:s}'.format(domain))
+    # fp_figure_exp1 = fp_results / Path('exp_1/{0:s}/exp1.pdf'.format(domain))
+    # visualize_exp_1(fp_cv, fp_figure_exp1)
 
     # Visualize Experiment 2 Results.
     # fp_data_r2c1 = fp_results / Path('exp_2/{0:s}/r2c1/r2c1_data.p'.format(domain))
@@ -610,7 +610,7 @@ def simulate_run(
     elif cond_info['selection_policy'] == 'shotgun':
         results_run = simulate_run_active_shotgun(
             emb_true, cond_info, freeze_options, dir_cond, run_id,
-            group_id, obs_existing
+            group_id=group_id
         )
     else:
         raise ValueError(

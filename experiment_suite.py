@@ -24,9 +24,9 @@ import pickle
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
 from psiz.models import Linear, Inverse, Exponential, HeavyTailed, StudentsT, load_embedding
-from psiz.dimensionality import suggest_dimensionality
+from psiz.dimensionality import dimension_search
 from psiz.simulate import Agent
-from psiz.generator import RandomGenerator, ActiveGenerator
+from psiz.generator import RandomGenerator, ActiveGenerator, ActiveShotgunGenerator
 from psiz import trials
 from psiz import datasets
 from psiz import visualize
@@ -60,7 +60,7 @@ def main(fp_results):
 
     """
     # Settings.
-    domain_list = ['birds']  # ['birds', 'rocks']
+    domain_list = ['birds']
 
     for domain in domain_list:
         # Define experiment filepaths.
@@ -72,7 +72,8 @@ def main(fp_results):
         # run_exp0a(domain, fp_exp0_domain)
         # run_exp_0b(domain, fp_exp0_domain)
         # run_exp_1(domain, fp_exp0_domain, fp_exp1_domain)
-        # run_exp_2(domain, fp_exp0_domain, fp_exp2_domain) 
+        # run_exp_2(domain, fp_exp0_domain, fp_exp2_domain)
+
     fp_exp3 = fp_results / Path('exp_3')
     # run_exp_3(domain, fp_exp3)
 
@@ -137,9 +138,13 @@ def run_exp0a(domain, fp_exp0_domain):
 
     np.random.seed(123)
     # Determine solution by selecting dimensionality based on cross-validation.
-    n_dim = suggest_dimensionality(
+    summary = dimension_search(
         obs, Exponential, catalog.n_stimuli, freeze_options=freeze_options,
-        verbose=1)
+        n_restart=20, n_split=3, n_fold=3,
+        max_patience=1, verbose=1
+    )
+    n_dim = summary["dim_best"]
+
     emb_true = Exponential(catalog.n_stimuli, n_dim)
     emb_true.freeze(freeze_options)
     emb_true.fit(obs, n_restart=100)
@@ -320,17 +325,17 @@ def run_exp_2(domain, fp_exp0_domain, fp_exp2_domain):
         'selection_policy': 'active',
         'n_reference': 8,
         'n_select': 2,
-        'n_trial_initial': 50,  #500,
-        'n_trial_total': 10050,  #10000,
+        'n_trial_initial': 50,
+        'n_trial_total': 10050,
         'n_trial_per_round': 40,
         'time_s_per_trial': time_s_8c2,
         'n_query': 40,
     }
-    cond_info_h8c2 = {
-        'name': 'Heuristic 8-choose-2',
-        'prefix': 'h8c2',
+    cond_info_as8c2 = {
+        'name': 'Active Shotgun 8-choose-2',
+        'prefix': 'as8c2',
         'domain': domain,
-        'selection_policy': 'heuristic',
+        'selection_policy': 'shotgun',
         'n_reference': 8,
         'n_select': 2,
         'n_trial_initial': 50,
@@ -344,19 +349,23 @@ def run_exp_2(domain, fp_exp0_domain, fp_exp2_domain):
     emb_true = load_embedding(fp_emb_true)
 
     # simulate_multiple_runs(
-    #     seed_list, emb_true, cond_info_r2c1, freeze_options, fp_exp2_domain / Path(cond_info_r2c1['prefix'])
+    #     seed_list, emb_true, cond_info_r2c1, freeze_options,
+    #     fp_exp2_domain / Path(cond_info_r2c1['prefix'])
     # )
 
     # simulate_multiple_runs(
-    #     seed_list, emb_true, cond_info_r8c2, freeze_options, fp_exp2_domain / Path(cond_info_r8c2['prefix'])
+    #     seed_list, emb_true, cond_info_r8c2, freeze_options,
+    #     fp_exp2_domain / Path(cond_info_r8c2['prefix'])
     # )
 
     # simulate_multiple_runs(
-    #     seed_list, emb_true, cond_info_a8c2, freeze_options, fp_exp2_domain / Path(cond_info_a8c2['prefix'])
+    #     seed_list, emb_true, cond_info_a8c2, freeze_options,
+    #     fp_exp2_domain / Path(cond_info_a8c2['prefix'])
     # )
 
     simulate_multiple_runs(
-        seed_list, emb_true, cond_info_h8c2, freeze_options, fp_exp2_domain / Path(cond_info_h8c2['prefix'])
+        seed_list, emb_true, cond_info_as8c2, freeze_options,
+        fp_exp2_domain / Path(cond_info_as8c2['prefix'])
     )
 
 
@@ -487,10 +496,11 @@ def evaluate_fold(
     # Train.
     obs_train = obs.subset(train_index)
     # Select dimensionality.
-    n_dim = suggest_dimensionality(
+    summary = dimension_search(
         obs_train, embedding_constructor, n_stimuli, n_restart=n_restart_dim,
-        freeze_options=freeze_options
+        freeze_options=freeze_options, n_split=3, n_fold=3, max_patience=1
     )
+    n_dim = summary["dim_best"]
     if verbose > 1:
         print("        Suggested dimensionality: {0}".format(n_dim))
 
@@ -594,6 +604,11 @@ def simulate_run(
         )
     elif cond_info['selection_policy'] == 'random-existing':
         results_run = simulate_run_random_existing(
+            emb_true, cond_info, freeze_options, dir_cond, run_id,
+            group_id, obs_existing
+        )
+    elif cond_info['selection_policy'] == 'shotgun':
+        results_run = simulate_run_active_shotgun(
             emb_true, cond_info, freeze_options, dir_cond, run_id,
             group_id, obs_existing
         )
@@ -782,6 +797,164 @@ def simulate_run_active(
             cond_info['n_trial_per_round'], emb_inferred, samples,
             n_query=cond_info['n_query']
         )
+        elapsed = time.time() - time_start
+        print('Active | Elapsed time: {0:.2f} m'.format(elapsed / 60))
+        # Simulate observations.
+        new_obs = agent.simulate(active_docket)
+        obs = trials.stack([obs, new_obs])
+        n_trial[i_round] = obs.n_trial
+
+        # if (i_round < 5) or (np.mod(i_round, 5) == 0):  # TODO try
+        if np.mod(i_round, 5) == 0:
+            # Infer new embedding with exact restarts.
+            freeze_options = {'z': emb_inferred.z['value']}
+            emb_inferred.freeze(freeze_options)
+            loss[i_round], _ = emb_inferred.fit(
+                obs, n_restart=3, init_mode='exact')
+            emb_inferred.thaw(['z'])
+            loss[i_round], _ = emb_inferred.fit(
+                obs, n_restart=50, init_mode='cold')
+        else:
+            loss[i_round] = emb_inferred.evaluate(obs)
+        # Compare the inferred model with ground truth by comparing the
+        # similarity matrices implied by each model.
+        simmat_infer = similarity_matrix(
+            emb_inferred.similarity, emb_inferred.z['value'])
+        r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
+        is_valid[i_round] = True
+        print(
+            'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
+                i_round, int(n_trial[i_round]), loss[i_round],
+                r_squared[i_round],
+                emb_inferred.theta['rho']['value'],
+                emb_inferred.theta['tau']['value'],
+                emb_inferred.theta['beta']['value'],
+                emb_inferred.theta['gamma']['value']
+            )
+        )
+        results_temp = {
+            'n_trial': np.expand_dims(n_trial[0:i_round + 1], axis=1),
+            'loss': np.expand_dims(loss[0:i_round + 1], axis=1),
+            'r_squared': np.expand_dims(r_squared[0:i_round + 1], axis=1),
+            'is_valid': np.expand_dims(is_valid[0:i_round + 1], axis=1)
+        }
+        data = {'info': cond_info, 'results': results_temp}
+        pickle.dump(data, open(fp_data_run, 'wb'))
+        obs.save(fp_obs)
+        emb_inferred.save(fp_emb_inf)
+        if r_squared[i_round] > .91:
+            at_criterion = True
+            print('Reached criterion.')
+
+        if at_criterion:
+            remaining_rounds = remaining_rounds - 1
+
+        if remaining_rounds < 0:
+            break
+
+    results = {
+        'n_trial': np.expand_dims(n_trial, axis=1),
+        'loss': np.expand_dims(loss, axis=1),
+        'r_squared': np.expand_dims(r_squared, axis=1),
+        'is_valid': np.expand_dims(is_valid, axis=1)
+    }
+    return results
+
+
+def simulate_run_active_shotgun(
+        emb_true, cond_info, freeze_options, dir_cond, run_id, group_id=0):
+    """Simulate active selection progress for a trial configuration.
+
+    Record:
+        n_trial, loss, r^2
+    """
+    # Define filepaths.
+    fp_data_run = dir_cond / Path('{0:s}_{1:s}_data.p'.format(
+        cond_info['prefix'], run_id)
+    )
+    fp_obs = dir_cond / Path('{0:s}_{1:s}_obs.hdf5'.format(
+        cond_info['prefix'], run_id)
+    )
+    fp_emb_inf = dir_cond / Path('{0:s}_{1:s}_emb_inf.hdf5'.format(
+        cond_info['prefix'], run_id)
+    )
+
+    # Define agent based on true embedding.
+    agent = Agent(emb_true)
+
+    # Similarity matrix associated with true embedding.
+    simmat_true = similarity_matrix(
+        emb_true.similarity, emb_true.z['value'])
+
+    # Pre-allocate metrics.
+    n_round = len(np.arange(
+        cond_info['n_trial_initial'],
+        cond_info['n_trial_total'] + 1,
+        cond_info['n_trial_per_round']
+    ))
+    n_trial = np.empty((n_round))
+    r_squared = np.empty((n_round))
+    loss = np.empty((n_round))
+    is_valid = np.zeros((n_round), dtype=bool)
+    at_criterion = False
+    remaining_rounds = 10
+
+    # The first round is seed using a randomly generated docket.
+    i_round = 0
+    rand_gen = RandomGenerator(
+        cond_info['n_reference'], cond_info['n_select'])
+    rand_docket = rand_gen.generate(
+        cond_info['n_trial_initial'], emb_true.n_stimuli)
+    # Simulate similarity judgments.
+    obs = agent.simulate(rand_docket)
+    # Infer initial model.
+    emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
+    emb_inferred.freeze(freeze_options)
+    n_trial[i_round] = obs.n_trial
+    loss[i_round], _ = emb_inferred.fit(obs, n_restart=50, init_mode='cold')
+    simmat_infer = similarity_matrix(
+        emb_inferred.similarity, emb_inferred.z['value'])
+    r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
+    is_valid[i_round] = True
+    print(
+        'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
+            i_round, int(n_trial[i_round]), loss[i_round],
+            r_squared[i_round],
+            emb_inferred.theta['rho']['value'],
+            emb_inferred.theta['tau']['value'],
+            emb_inferred.theta['beta']['value'],
+            emb_inferred.theta['gamma']['value']
+        )
+    )
+    # Freeze beta parameter.
+    freeze_options = {'theta': {'beta': emb_inferred.theta['beta']['value']}}
+    emb_inferred.freeze(freeze_options)
+
+    active_gen = ActiveShotgunGenerator(
+        n_reference=8, n_select=2, n_trial_shotgun=2000
+    )
+    # Infer independent models with increasing amounts of data.
+    for i_round in np.arange(1, n_round + 1):
+        # Select trials based on expected IG.
+        time_start = time.time()
+        samples = emb_inferred.posterior_samples(
+            obs, n_final_sample=1000, n_burn=100, thin_step=10
+        )
+        elapsed = time.time() - time_start
+        print('Posterior | Elapsed time: {0:.2f} m'.format(elapsed / 60))
+        emb_inferred.z['value'] = np.median(samples['z'], axis=2)
+
+        time_start = time.time()
+        active_docket, ig_info = active_gen.generate(
+            emb_true.n_stimuli, emb_inferred, samples,
+            n_query=emb_true.n_stimuli, verbose=1
+        )
+        # Select top trials based on best expected information gain.
+        ig_trial = ig_info["ig_trial"]
+        idx_sort = np.argsort(-ig_trial)
+        idx_sort = idx_sort[0:cond_info['n_trial_per_round']]
+        active_docket = active_docket.subset(idx_sort)
+
         elapsed = time.time() - time_start
         print('Active | Elapsed time: {0:.2f} m'.format(elapsed / 60))
         # Simulate observations.

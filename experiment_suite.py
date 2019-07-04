@@ -931,7 +931,7 @@ def simulate_run_active_shotgun(
     emb_inferred.freeze(freeze_options)
 
     active_gen = ActiveShotgunGenerator(
-        n_reference=8, n_select=2, n_trial_shotgun=2000
+        n_reference=8, n_select=2, n_trial_shotgun=2000, priority='kl'
     )
     # Infer independent models with increasing amounts of data.
     for i_round in np.arange(1, n_round + 1):
@@ -946,14 +946,14 @@ def simulate_run_active_shotgun(
 
         time_start = time.time()
         active_docket, ig_info = active_gen.generate(
-            emb_true.n_stimuli, emb_inferred, samples,
-            n_query=emb_true.n_stimuli, verbose=1
+            cond_info['n_trial_per_round'], emb_inferred, samples,
+            n_query=cond_info['n_trial_per_round'], verbose=1
         )
         # Select top trials based on best expected information gain.
-        ig_trial = ig_info["ig_trial"]
-        idx_sort = np.argsort(-ig_trial)
-        idx_sort = idx_sort[0:cond_info['n_trial_per_round']]
-        active_docket = active_docket.subset(idx_sort)
+        # ig_trial = ig_info["ig_trial"]
+        # idx_sort = np.argsort(-ig_trial)
+        # idx_sort = idx_sort[0:cond_info['n_trial_per_round']]
+        # active_docket = active_docket.subset(idx_sort)
 
         elapsed = time.time() - time_start
         print('Active | Elapsed time: {0:.2f} m'.format(elapsed / 60))

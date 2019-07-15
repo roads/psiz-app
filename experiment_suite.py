@@ -1,7 +1,13 @@
-"""Experiment 2: Compare trial configurations and selection policies.
+"""Experiment Suite.
 
-Since this experiment is computationally intensive, intermediate
-results are saved to disk and loaded as needed.
+This script carries out the experiments described in:
+
+Roads, B.D. & Mozer, M. C. (2019). Obtaining psychological embeddings
+    through joint kernel and metric learning. Behavior Research Methods.
+    doi: 10.3758/s13428-019-01275-5
+
+Since this experiment is computationally intensive and time-consuming,
+intermediate results are saved to disk and loaded as needed.
 """
 
 import os
@@ -21,12 +27,12 @@ import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 import pickle
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
-from psiz.models import Linear, Inverse, Exponential, HeavyTailed, StudentsT, load_embedding
+from psiz.models import Inverse, Exponential, HeavyTailed, StudentsT
+from psiz.models import load_embedding
 from psiz.dimensionality import dimension_search
 from psiz.simulate import Agent
-from psiz.generator import RandomGenerator, ActiveGenerator, ActiveShotgunGenerator
+from psiz.generator import RandomGenerator, ActiveGenerator
 from psiz import trials
 from psiz import datasets
 from psiz import visualize
@@ -34,86 +40,83 @@ from psiz.utils import similarity_matrix, matrix_comparison, assess_convergence
 
 
 def main(fp_results):
-    """Run all experiments.
+    """Script to run all experiments.
 
-    Experiment 0:  Ground truth embedding.
+    Preliminary A:  Ground truth embedding.
         An initial embedding is inferred using real observations data.
         This embedding is then treated as ground truth for the purpose
         of simulating human behavior in Experiment 2.
 
-    Experiment 1: Similarity kernel comparison.
+    Preliminary B:  Assess convergence of embedding.
 
-    Experiment 2a: Trial configuration comparison.
+    Experiment 1: Similarity kernel comparison using real human data.
+
+    Simulation 1: Trial configuration comparison.
         Two different trial configurations are compared using
-            simulations.
+            simulations. In addition, random and active selection are
+            compared using simulations.
 
-    Experiment 2b:  Selection comparison for one group.
-        Random and active selection are compared using simulations.
+    Simulation 2:  Independent versus shared embedding inference for
+        two groups.
 
     Notes:
-        In Experiment 2, the dimensionality is not inferred at each
-            step. Instead, the correct dimensionality is assumed to be
-            known.
-        In Experiment 2, result files are saved after each run. New
+        In Simulation 1 and 2, the dimensionality is not inferred at
+            each step. Instead, the correct dimensionality is assumed
+            to be known.
+        In Simulation 1, result files are saved after each run. New
             results are appeneded to existing results if the respective
             file already exists.
 
     """
     # Settings.
-    domain_list = ['birds']
+    domain = 'birds'
 
-    for domain in domain_list:
-        # Define experiment filepaths.
-        fp_exp0_domain = fp_results / Path('exp_0/{0:s}'.format(domain))
-        fp_exp1_domain = fp_results / Path('exp_1/{0:s}'.format(domain))
-        fp_exp2_domain = fp_results / Path('exp_2/{0:s}'.format(domain))
+    # Define experiment/simulation filepaths.
+    fp_pre_domain = fp_results / Path('prelim/{0:s}'.format(domain))
+    fp_exp_1_domain = fp_results / Path('exp_1/{0:s}'.format(domain))
+    fp_sim_1_domain = fp_results / Path('sim_1/{0:s}'.format(domain))
+    fp_sim_2 = fp_results / Path('sim_2')
 
-        # Run each experiment.
-        # run_exp0a(domain, fp_exp0_domain)
-        # run_exp_0b(domain, fp_exp0_domain)
-        # run_exp_1(domain, fp_exp0_domain, fp_exp1_domain)
-        run_exp_2(domain, fp_exp0_domain, fp_exp2_domain)
+    # Run preliminaries.
+    run_prelim_a(domain, fp_pre_domain)
+    run_prelim_b(domain, fp_pre_domain)
 
-    fp_exp3 = fp_results / Path('exp_3')
-    # run_exp_3(domain, fp_exp3)
+    # Run each experiment/simulation.
+    run_exp_1(domain, fp_pre_domain, fp_exp_1_domain)
+    run_sim_1(domain, fp_pre_domain, fp_sim_1_domain)
+    run_sim_2(domain, fp_sim_2)
 
-    # Visualize Experiment 1 Results.
-    # fp_cv = fp_results / Path('exp_1/{0:s}'.format(domain))
-    # fp_figure_exp1 = fp_results / Path('exp_1/{0:s}/exp1.pdf'.format(domain))
-    # visualize_exp_1(fp_cv, fp_figure_exp1)
+    # Visualize Experiment 1.
+    fp_fig_exp_1 = fp_exp_1_domain / Path('exp_1.pdf')
+    visualize_exp_1(fp_exp_1_domain, fp_fig_exp_1)
 
-    # Visualize Experiment 2 Results.
-    # fp_data_r2c1 = fp_results / Path('exp_2/{0:s}/r2c1/r2c1_data.p'.format(domain))
-    # fp_data_r8c2 = fp_results / Path('exp_2/{0:s}/r8c2/r8c2_data.p'.format(domain))
-    # fp_data_a8c2 = fp_results / Path('exp_2/{0:s}/a8c2/a8c2_data.p'.format(domain))
-    # fp_figure_exp2 = fp_results / Path('exp_2/{0:s}/exp2.pdf'.format(domain))
-    # data_r2c1 = pickle.load(open(fp_data_r2c1, 'rb'))
-    # data_r8c2 = pickle.load(open(fp_data_r8c2, 'rb'))
-    # data_a8c2 = pickle.load(open(fp_data_a8c2, 'rb'))
-    # visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure_exp2)
-    # # TODO
-    # fp_data_h8c2 = fp_results / Path('exp_2/{0:s}/h8c2/h8c2_913_data.p'.format(domain))
-    # data_h8c2 = pickle.load(open(fp_data_h8c2, 'rb'))
-    # fp_figure_exp2_plus = fp_results / Path('exp_2/{0:s}/exp2_plus.pdf'.format(domain))
-    # visualize_exp_2_plus(data_r2c1, data_r8c2, data_a8c2, data_h8c2, fp_figure_exp2_plus)
+    # Visualize Simulation 1.
+    fp_fig_sim_1 = fp_sim_1_domain / Path('sim_1.pdf')
+    fp_data_r2c1 = fp_sim_1_domain / Path('r2c1/r2c1_data.p')
+    fp_data_r8c2 = fp_sim_1_domain / Path('r8c2/r8c2_data.p')
+    fp_data_a8c2 = fp_sim_1_domain / Path('a8c2/a8c2_data.p')
+    data_r2c1 = pickle.load(open(fp_data_r2c1, 'rb'))
+    data_r8c2 = pickle.load(open(fp_data_r8c2, 'rb'))
+    data_a8c2 = pickle.load(open(fp_data_a8c2, 'rb'))
+    visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_fig_sim_1)
 
-    # # Visualize Experiment 3 Results.
-    # fp_data_r2c1 = fp_results / Path('exp_3/r8c2_1g/r8c2_1g_data.p')
-    # fp_data_r8c2 = fp_results / Path('exp_3/r8c2_2g/r8c2_2g_data.p')
-    # fp_figure_exp3 = fp_results / Path('exp_3/exp3.pdf')
-    # data_r8c2_g1 = pickle.load(open(fp_data_r2c1, 'rb'))
-    # data_r8c2_g2 = pickle.load(open(fp_data_r8c2, 'rb'))
-    # visualize_exp_3(data_r8c2_g1, data_r8c2_g2, fp_figure_exp3)
+    # Visualize Simulation 2.
+    fp_fig_sim_2 = fp_sim_2 / Path('sim_2.pdf')
+    fp_data_r2c1 = fp_sim_2 / Path('r8c2_1g/r8c2_1g_data.p')
+    fp_data_r8c2 = fp_sim_2 / Path('r8c2_2g/r8c2_2g_data.p')
+    data_r8c2_g1 = pickle.load(open(fp_data_r2c1, 'rb'))
+    data_r8c2_g2 = pickle.load(open(fp_data_r8c2, 'rb'))
+    visualize_exp_3(data_r8c2_g1, data_r8c2_g2, fp_fig_sim_2)
 
 
-def run_exp0a(domain, fp_exp0_domain):
+def run_prelim_a(domain, fp_pre_domain):
     """Run Experiment 0."""
     # Settings.
     freeze_options = {'theta': {'rho': 2., 'tau': 1.}}
     # Define filepaths.
-    fp_emb_true_2d = fp_exp0_domain / Path('emb_true_2d.hdf5')
-    fp_fig_emb_true_2d = fp_exp0_domain / Path('emb_true_2d.pdf')
-    fp_emb_true = fp_exp0_domain / Path('emb_true.hdf5')
+    fp_emb_true_2d = fp_pre_domain / Path('emb_true_2d.hdf5')
+    fp_fig_emb_true_2d = fp_pre_domain / Path('emb_true_2d.pdf')
+    fp_emb_true = fp_pre_domain / Path('emb_true.hdf5')
 
     # Load the real observations.
     if domain == 'birds':
@@ -151,11 +154,14 @@ def run_exp0a(domain, fp_exp0_domain):
     emb_true.save(fp_emb_true)
 
 
-def run_exp_0b(domain, fp_exp0_domain):
-    """Run Experiment 0b."""
+def run_prelim_b(domain, fp_pre_domain):
+    """Run Experiment 0b.
+
+    Assess convergence of embedding.
+    """
     # Settings.
-    fp_probe = fp_exp0_domain / Path('probe.p')
-    fp_fig_probe = fp_exp0_domain / Path('probe.pdf')
+    fp_probe = fp_pre_domain / Path('probe.p')
+    fp_fig_probe = fp_pre_domain / Path('probe.pdf')
 
     # Load the real observations.
     if domain == 'birds':
@@ -173,11 +179,10 @@ def run_exp_0b(domain, fp_exp0_domain):
     visualize.visualize_convergence(converge_data, fp_fig_probe)
 
 
-def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
+def run_exp_1(domain, fp_pre_domain, fp_exp_1_domain):
     """Run Experiment 1."""
     # Settings.
     n_fold = 10
-    i_fold_fit = 0
 
     # Load the real observations.
     if domain == 'birds':
@@ -188,26 +193,14 @@ def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
 
     # Instantiate the balanced k-fold cross-validation object.
     np.random.seed(seed=4352)
-    # skf = StratifiedKFold(n_splits=n_fold, shuffle=True, random_state=723)
-    # split_list = list(skf.split(obs.stimulus_set, obs.config_idx))
     skf = GroupKFold(n_splits=n_fold)
-    split_list = list(skf.split(obs.stimulus_set, obs.config_idx, obs.agent_id))
+    split_list = list(
+        skf.split(obs.stimulus_set, obs.config_idx, obs.agent_id)
+    )
     n_fold = skf.get_n_splits()
 
-    # Linear
-    # fp_model = fp_exp1_domain / Path('Linear')
-    # freeze_options = {
-    #     'theta': {
-    #         'rho': 2,
-    #         'beta': 1
-    #     }
-    # }
-    # loss = embedding_cv(
-    #     split_list, obs, Linear, catalog.n_stimuli, freeze_options)
-    # pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
-
     # Inverse
-    fp_model = fp_exp1_domain / Path('Inverse')
+    fp_model = fp_exp_1_domain / Path('Inverse')
     freeze_options = {
         'theta': {
             'rho': 2,
@@ -219,59 +212,25 @@ def run_exp_1(domain, fp_exp0_domain, fp_exp1_domain):
     pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
 
     # Exponential family.
-    fp_model = fp_exp1_domain / Path('Exponential')
+    fp_model = fp_exp_1_domain / Path('Exponential')
     freeze_options = {}
     loss = embedding_cv(
         split_list, obs, Exponential, catalog.n_stimuli, freeze_options)
     pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
 
-    # Gaussian family.
-    # fp_model = fp_exp1_domain / Path('Gaussian')
-    # freeze_options = {
-    #     'theta': {
-    #         'rho': 2,
-    #         'tau': 2,
-    #         'gamma': 0
-    #     }
-    # }
-    # loss = embedding_cv(
-    #     split_list, obs, Exponential, catalog.n_stimuli, freeze_options)
-    # pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
-
-    # Laplacian family.
-    # fp_model = fp_exp1_domain / Path('Laplacian')
-    # freeze_options = {
-    #     'theta': {
-    #         'rho': 2,
-    #         'tau': 1,
-    #         'gamma': 0
-    #     }
-    # }
-    # loss = embedding_cv(
-    #     split_list, obs, Exponential, catalog.n_stimuli, freeze_options)
-    # pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
-
     # Heavy-tailed family.
-    fp_model = fp_exp1_domain / Path('HeavyTailed')
+    fp_model = fp_exp_1_domain / Path('HeavyTailed')
     freeze_options = {}
     loss = embedding_cv(
         split_list, obs, HeavyTailed, catalog.n_stimuli, freeze_options)
     pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
 
     # Student-t family.
-    fp_model = fp_exp1_domain / Path('StudentsT')
+    fp_model = fp_exp_1_domain / Path('StudentsT')
     freeze_options = {}
     loss = embedding_cv(
         split_list, obs, StudentsT, catalog.n_stimuli, freeze_options)
     pickle.dump(loss, open(str(fp_model / Path("loss.p")), "wb"))
-
-
-def exp_1_load_dim(fp_model):
-    """Load dimensionality estimate."""
-    filepath = fp_model / Path('loss.p')
-    loss = pickle.load(open(str(filepath), "rb"))
-    n_dim = dim_from_list(loss["n_dim"])
-    return n_dim
 
 
 def dim_from_list(dim_list):
@@ -284,12 +243,11 @@ def dim_from_list(dim_list):
     return int(n_dim)
 
 
-def run_exp_2(domain, fp_exp0_domain, fp_exp2_domain):
+def run_sim_1(domain, fp_pre_domain, fp_sim_1_domain):
     """Run Experiment 2."""
     # Settings.
     freeze_options = {'theta': {'rho': 2., 'tau': 1.}}
     seed_list = [913, 192, 785, 891, 841]
-    # TODO Derive from observations data.
     time_s_2c1 = 3.06
     time_s_8c2 = 8.98
 
@@ -298,30 +256,35 @@ def run_exp_2(domain, fp_exp0_domain, fp_exp2_domain):
         'name': 'Random 2-choose-1',
         'prefix': 'r2c1',
         'domain': domain,
+        'query_policy': 'kl',
         'selection_policy': 'random',
         'n_reference': 2,
         'n_select': 1,
         'n_trial_initial': 500,
         'n_trial_total': 150500,
         'n_trial_per_round': 5000,
-        'time_s_per_trial': time_s_2c1
+        'time_s_per_trial': time_s_2c1,
+        'n_redundant': 1
     }
     cond_info_r8c2 = {
         'name': 'Random 8-choose-2',
         'prefix': 'r8c2',
         'domain': domain,
+        'query_policy': 'kl',
         'selection_policy': 'random',
         'n_reference': 8,
         'n_select': 2,
         'n_trial_initial': 50,
         'n_trial_total': 15050,
         'n_trial_per_round': 500,
-        'time_s_per_trial': time_s_8c2
+        'time_s_per_trial': time_s_8c2,
+        'n_redundant': 1
     }
     cond_info_a8c2 = {
         'name': 'Active 8-choose-2',
         'prefix': 'a8c2',
         'domain': domain,
+        'query_policy': 'kl',
         'selection_policy': 'active',
         'n_reference': 8,
         'n_select': 2,
@@ -330,46 +293,29 @@ def run_exp_2(domain, fp_exp0_domain, fp_exp2_domain):
         'n_trial_per_round': 40,
         'time_s_per_trial': time_s_8c2,
         'n_query': 40,
-    }
-    cond_info_as8c2 = {
-        'name': 'Active Shotgun 8-choose-2',
-        'prefix': 'as8c2',
-        'domain': domain,
-        'selection_policy': 'shotgun',
-        'n_reference': 8,
-        'n_select': 2,
-        'n_trial_initial': 50,
-        'n_trial_total': 12050,
-        'n_trial_per_round': 40,
-        'time_s_per_trial': time_s_8c2,
-        'n_query': 40,
+        'n_redundant': 1
     }
 
-    fp_emb_true = fp_exp0_domain / Path('emb_true.hdf5')
+    fp_emb_true = fp_pre_domain / Path('emb_true.hdf5')
     emb_true = load_embedding(fp_emb_true)
 
-    # simulate_multiple_runs(
-    #     seed_list, emb_true, cond_info_r2c1, freeze_options,
-    #     fp_exp2_domain / Path(cond_info_r2c1['prefix'])
-    # )
-
-    # simulate_multiple_runs(
-    #     seed_list, emb_true, cond_info_r8c2, freeze_options,
-    #     fp_exp2_domain / Path(cond_info_r8c2['prefix'])
-    # )
-
-    # simulate_multiple_runs(
-    #     seed_list, emb_true, cond_info_a8c2, freeze_options,
-    #     fp_exp2_domain / Path(cond_info_a8c2['prefix'])
-    # )
+    simulate_multiple_runs(
+        seed_list, emb_true, cond_info_r2c1, freeze_options,
+        fp_sim_1_domain / Path(cond_info_r2c1['prefix'])
+    )
 
     simulate_multiple_runs(
-        seed_list, emb_true, cond_info_as8c2, freeze_options,
-        fp_exp2_domain / Path(cond_info_as8c2['prefix'])
+        seed_list, emb_true, cond_info_r8c2, freeze_options,
+        fp_sim_1_domain / Path(cond_info_r8c2['prefix'])
+    )
+
+    simulate_multiple_runs(
+        seed_list, emb_true, cond_info_a8c2, freeze_options,
+        fp_sim_1_domain / Path(cond_info_a8c2['prefix'])
     )
 
 
-def run_exp_3(domain, fp_exp3):
+def run_sim_2(domain, fp_sim_2):
     """Run Experiment 2.
 
     Random 8-choose-2 novices
@@ -430,15 +376,14 @@ def run_exp_3(domain, fp_exp3):
     agent_novice = Agent(emb_true, group_id=0)
     obs_novice = agent_novice.simulate(docket)
 
-    # TODO
-    # simulate_multiple_runs(
-    #     seed_list, emb_true, cond_info_r8c2_1g, freeze_options,
-    #     fp_exp3 / Path(cond_info_r8c2_1g['prefix']), group_id=1
-    # )
+    simulate_multiple_runs(
+        seed_list, emb_true, cond_info_r8c2_1g, freeze_options,
+        fp_sim_2 / Path(cond_info_r8c2_1g['prefix']), group_id=1
+    )
 
     simulate_multiple_runs(
         seed_list, emb_true, cond_info_r8c2_2g, freeze_options,
-        fp_exp3 / Path(cond_info_r8c2_2g['prefix']), group_id=1,
+        fp_sim_2 / Path(cond_info_r8c2_2g['prefix']), group_id=1,
         obs_existing=obs_novice
     )
 
@@ -475,7 +420,11 @@ def embedding_cv(
         acc_8c2.append(results[i_fold][3])
         n_dim.append(results[i_fold][4])
 
-    return {'train': loss_train, 'test': loss_test, 'n_dim': n_dim, '2c1': acc_2c1, '8c2': acc_8c2}
+    res = {
+        'train': loss_train, 'test': loss_test, 'n_dim': n_dim,
+        '2c1': acc_2c1, '8c2': acc_8c2
+    }
+    return res
 
 
 def evaluate_fold(
@@ -509,7 +458,7 @@ def evaluate_fold(
     if len(freeze_options) > 0:
         emb.freeze(freeze_options=freeze_options)
     # Fit model using training data.
-    loss_train, loss_val = emb.fit(obs_train, n_restart=n_restart_fit)
+    loss_train, _ = emb.fit(obs_train, n_restart=n_restart_fit)
 
     # Test.
     obs_test = obs.subset(test_index)
@@ -607,11 +556,6 @@ def simulate_run(
             emb_true, cond_info, freeze_options, dir_cond, run_id,
             group_id, obs_existing
         )
-    elif cond_info['selection_policy'] == 'shotgun':
-        results_run = simulate_run_active_shotgun(
-            emb_true, cond_info, freeze_options, dir_cond, run_id,
-            group_id=group_id
-        )
     else:
         raise ValueError(
             'The `selection_policy` {0} is not defined. Must be either '
@@ -630,9 +574,15 @@ def simulate_run_random(
         n_trial, loss, r^2
     """
     # Define filepaths.
-    fp_data_run = dir_cond / Path('{0:s}_{1:s}_data.p'.format(cond_info['prefix'], run_id))
-    fp_obs = dir_cond / Path('{0:s}_{1:s}_obs.hdf5'.format(cond_info['prefix'], run_id))
-    fp_emb_inf = dir_cond / Path('{0:s}_{1:s}_emb_inf.hdf5'.format(cond_info['prefix'], run_id))
+    fp_data_run = dir_cond / Path('{0:s}_{1:s}_data.p'.format(
+        cond_info['prefix'], run_id)
+    )
+    fp_obs = dir_cond / Path('{0:s}_{1:s}_obs.hdf5'.format(
+        cond_info['prefix'], run_id)
+    )
+    # fp_emb_inf = dir_cond / Path('{0:s}_{1:s}_emb_inf.hdf5'.format(
+    #     cond_info['prefix'], run_id)
+    # )
 
     # Define agent based on true embedding.
     agent = Agent(emb_true, group_id=group_id)
@@ -682,13 +632,9 @@ def simulate_run_random(
         r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
         is_valid[i_round] = True
         print(
-            'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
+            'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f}'.format(
                 i_round, int(n_trial[i_round]), loss[i_round],
-                r_squared[i_round],
-                emb_inferred.theta['rho']['value'],
-                emb_inferred.theta['tau']['value'],
-                emb_inferred.theta['beta']['value'],
-                emb_inferred.theta['gamma']['value']
+                r_squared[i_round]
             )
         )
         results_temp = {
@@ -712,157 +658,8 @@ def simulate_run_random(
 
 
 def simulate_run_active(
-        emb_true, cond_info, freeze_options, dir_cond, run_id, group_id=0):
-    """Simulate active selection progress for a trial configuration.
-
-    Record:
-        n_trial, loss, r^2
-    """
-    # Define filepaths.
-    fp_data_run = dir_cond / Path('{0:s}_{1:s}_data.p'.format(cond_info['prefix'], run_id))
-    fp_obs = dir_cond / Path('{0:s}_{1:s}_obs.hdf5'.format(cond_info['prefix'], run_id))
-    fp_emb_inf = dir_cond / Path('{0:s}_{1:s}_emb_inf.hdf5'.format(cond_info['prefix'], run_id))
-
-    # Define agent based on true embedding.
-    agent = Agent(emb_true)
-
-    # Similarity matrix associated with true embedding.
-    simmat_true = similarity_matrix(
-        emb_true.similarity, emb_true.z['value'])
-
-    # Pre-allocate metrics.
-    n_round = len(np.arange(
-        cond_info['n_trial_initial'],
-        cond_info['n_trial_total'] + 1,
-        cond_info['n_trial_per_round']
-    ))
-    n_trial = np.empty((n_round))
-    r_squared = np.empty((n_round))
-    loss = np.empty((n_round))
-    is_valid = np.zeros((n_round), dtype=bool)
-    at_criterion = False
-    remaining_rounds = 10
-
-    # The first round is seed using a randomly generated docket.
-    i_round = 0
-    rand_gen = RandomGenerator(
-        cond_info['n_reference'], cond_info['n_select'])
-    rand_docket = rand_gen.generate(
-        cond_info['n_trial_initial'], emb_true.n_stimuli)
-    # Simulate similarity judgments.
-    obs = agent.simulate(rand_docket)
-    # Infer initial model.
-    emb_inferred = Exponential(emb_true.n_stimuli, emb_true.n_dim)
-    emb_inferred.freeze(freeze_options)
-    n_trial[i_round] = obs.n_trial
-    loss[i_round], _ = emb_inferred.fit(obs, n_restart=50, init_mode='cold')
-    simmat_infer = similarity_matrix(
-        emb_inferred.similarity, emb_inferred.z['value'])
-    r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
-    is_valid[i_round] = True
-    print(
-        'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
-            i_round, int(n_trial[i_round]), loss[i_round],
-            r_squared[i_round],
-            emb_inferred.theta['rho']['value'],
-            emb_inferred.theta['tau']['value'],
-            emb_inferred.theta['beta']['value'],
-            emb_inferred.theta['gamma']['value']
-        )
-    )
-    # Freeze beta parameter.
-    freeze_options = {'theta': {'beta': emb_inferred.theta['beta']['value']}}
-    emb_inferred.freeze(freeze_options)
-
-    config_list = pd.DataFrame({
-        'n_reference': np.array([8], dtype=np.int32),
-        'n_select': np.array([2], dtype=np.int32),
-        'is_ranked': [True],
-        'n_outcome': np.array([56], dtype=np.int32)
-    })
-    active_gen = ActiveGenerator(config_list=config_list, n_neighbor=12)
-    # Infer independent models with increasing amounts of data.
-    for i_round in np.arange(1, n_round + 1):
-        # Select trials based on expected IG.
-        time_start = time.time()
-        samples = emb_inferred.posterior_samples(
-            obs, n_final_sample=1000, n_burn=100, thin_step=10
-        )
-        elapsed = time.time() - time_start
-        print('Posterior | Elapsed time: {0:.2f} m'.format(elapsed / 60))
-        emb_inferred.z['value'] = np.median(samples['z'], axis=2)
-
-        time_start = time.time()
-        active_docket, _ = active_gen.generate(
-            cond_info['n_trial_per_round'], emb_inferred, samples,
-            n_query=cond_info['n_query']
-        )
-        elapsed = time.time() - time_start
-        print('Active | Elapsed time: {0:.2f} m'.format(elapsed / 60))
-        # Simulate observations.
-        new_obs = agent.simulate(active_docket)
-        obs = trials.stack([obs, new_obs])
-        n_trial[i_round] = obs.n_trial
-
-        # if (i_round < 5) or (np.mod(i_round, 5) == 0):  # TODO try
-        if np.mod(i_round, 5) == 0:
-            # Infer new embedding with exact restarts.
-            freeze_options = {'z': emb_inferred.z['value']}
-            emb_inferred.freeze(freeze_options)
-            loss[i_round], _ = emb_inferred.fit(
-                obs, n_restart=3, init_mode='exact')
-            emb_inferred.thaw(['z'])
-            loss[i_round], _ = emb_inferred.fit(
-                obs, n_restart=50, init_mode='cold')
-        else:
-            loss[i_round] = emb_inferred.evaluate(obs)
-        # Compare the inferred model with ground truth by comparing the
-        # similarity matrices implied by each model.
-        simmat_infer = similarity_matrix(
-            emb_inferred.similarity, emb_inferred.z['value'])
-        r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
-        is_valid[i_round] = True
-        print(
-            'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
-                i_round, int(n_trial[i_round]), loss[i_round],
-                r_squared[i_round],
-                emb_inferred.theta['rho']['value'],
-                emb_inferred.theta['tau']['value'],
-                emb_inferred.theta['beta']['value'],
-                emb_inferred.theta['gamma']['value']
-            )
-        )
-        results_temp = {
-            'n_trial': np.expand_dims(n_trial[0:i_round + 1], axis=1),
-            'loss': np.expand_dims(loss[0:i_round + 1], axis=1),
-            'r_squared': np.expand_dims(r_squared[0:i_round + 1], axis=1),
-            'is_valid': np.expand_dims(is_valid[0:i_round + 1], axis=1)
-        }
-        data = {'info': cond_info, 'results': results_temp}
-        pickle.dump(data, open(fp_data_run, 'wb'))
-        obs.save(fp_obs)
-        emb_inferred.save(fp_emb_inf)
-        if r_squared[i_round] > .91:
-            at_criterion = True
-            print('Reached criterion.')
-
-        if at_criterion:
-            remaining_rounds = remaining_rounds - 1
-
-        if remaining_rounds < 0:
-            break
-
-    results = {
-        'n_trial': np.expand_dims(n_trial, axis=1),
-        'loss': np.expand_dims(loss, axis=1),
-        'r_squared': np.expand_dims(r_squared, axis=1),
-        'is_valid': np.expand_dims(is_valid, axis=1)
-    }
-    return results
-
-
-def simulate_run_active_shotgun(
-        emb_true, cond_info, freeze_options, dir_cond, run_id, group_id=0):
+        emb_true, cond_info, freeze_options, dir_cond, run_id, group_id=0,
+        n_redundant=1):
     """Simulate active selection progress for a trial configuration.
 
     Record:
@@ -899,7 +696,7 @@ def simulate_run_active_shotgun(
     at_criterion = False
     remaining_rounds = 10
 
-    # The first round is seed using a randomly generated docket.
+    # The first round is seeded using a randomly generated docket.
     i_round = 0
     rand_gen = RandomGenerator(
         cond_info['n_reference'], cond_info['n_select'])
@@ -917,22 +714,22 @@ def simulate_run_active_shotgun(
     r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
     is_valid[i_round] = True
     print(
-        'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
+        'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f}'.format(
             i_round, int(n_trial[i_round]), loss[i_round],
-            r_squared[i_round],
-            emb_inferred.theta['rho']['value'],
-            emb_inferred.theta['tau']['value'],
-            emb_inferred.theta['beta']['value'],
-            emb_inferred.theta['gamma']['value']
+            r_squared[i_round]
         )
     )
     # Freeze beta parameter.
     freeze_options = {'theta': {'beta': emb_inferred.theta['beta']['value']}}
     emb_inferred.freeze(freeze_options)
 
-    active_gen = ActiveShotgunGenerator(
-        n_reference=8, n_select=2, n_trial_shotgun=2000, priority='kl'
-    )
+    config_list = pd.DataFrame({
+        'n_reference': np.array([8], dtype=np.int32),
+        'n_select': np.array([2], dtype=np.int32),
+        'is_ranked': [True],
+        'n_outcome': np.array([56], dtype=np.int32)
+    })
+    active_gen = ActiveGenerator(config_list=config_list, n_neighbor=12)
     # Infer independent models with increasing amounts of data.
     for i_round in np.arange(1, n_round + 1):
         # Select trials based on expected IG.
@@ -945,24 +742,18 @@ def simulate_run_active_shotgun(
         emb_inferred.z['value'] = np.median(samples['z'], axis=2)
 
         time_start = time.time()
-        active_docket, ig_info = active_gen.generate(
+        active_docket, _ = active_gen.generate(
             cond_info['n_trial_per_round'], emb_inferred, samples,
-            n_query=cond_info['n_trial_per_round'], verbose=1
+            n_query=cond_info['n_query']
         )
-        # Select top trials based on best expected information gain.
-        # ig_trial = ig_info["ig_trial"]
-        # idx_sort = np.argsort(-ig_trial)
-        # idx_sort = idx_sort[0:cond_info['n_trial_per_round']]
-        # active_docket = active_docket.subset(idx_sort)
-
         elapsed = time.time() - time_start
         print('Active | Elapsed time: {0:.2f} m'.format(elapsed / 60))
         # Simulate observations.
-        new_obs = agent.simulate(active_docket)
-        obs = trials.stack([obs, new_obs])
+        for _ in range(n_redundant):
+            new_obs = agent.simulate(active_docket)
+            obs = trials.stack([obs, new_obs])
         n_trial[i_round] = obs.n_trial
 
-        # if (i_round < 5) or (np.mod(i_round, 5) == 0):  # TODO try
         if np.mod(i_round, 5) == 0:
             # Infer new embedding with exact restarts.
             freeze_options = {'z': emb_inferred.z['value']}
@@ -981,13 +772,9 @@ def simulate_run_active_shotgun(
         r_squared[i_round] = matrix_comparison(simmat_infer, simmat_true)
         is_valid[i_round] = True
         print(
-            'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
+            'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f}'.format(
                 i_round, int(n_trial[i_round]), loss[i_round],
-                r_squared[i_round],
-                emb_inferred.theta['rho']['value'],
-                emb_inferred.theta['tau']['value'],
-                emb_inferred.theta['beta']['value'],
-                emb_inferred.theta['gamma']['value']
+                r_squared[i_round]
             )
         )
         results_temp = {
@@ -1059,9 +846,15 @@ def simulate_run_random_existing(
         n_trial, loss, r^2
     """
     # Define filepaths.
-    fp_data_run = dir_cond / Path('{0:s}_{1:s}_data.p'.format(cond_info['prefix'], run_id))
-    fp_obs = dir_cond / Path('{0:s}_{1:s}_obs.hdf5'.format(cond_info['prefix'], run_id))
-    fp_emb_inf = dir_cond / Path('{0:s}_{1:s}_emb_inf.hdf5'.format(cond_info['prefix'], run_id))
+    fp_data_run = dir_cond / Path('{0:s}_{1:s}_data.p'.format(
+        cond_info['prefix'], run_id)
+    )
+    fp_obs = dir_cond / Path('{0:s}_{1:s}_obs.hdf5'.format(
+        cond_info['prefix'], run_id)
+    )
+    # fp_emb_inf = dir_cond / Path('{0:s}_{1:s}_emb_inf.hdf5'.format(
+    #     cond_info['prefix'], run_id)
+    # )
 
     # Define expert agent based on true embedding.
     agent_expert = Agent(emb_true, group_id=1)
@@ -1149,13 +942,9 @@ def simulate_run_random_existing(
         )
         is_valid[i_round] = True
         print(
-            'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f} | rho: {4:.1f} | tau: {5:.1f} | beta: {6:.1f} | gamma: {7:.2g}'.format(
+            'Round {0} ({1:d} trials) | Loss: {2:.2f} | r^2:{3:.3f}'.format(
                 i_round, int(n_trial[i_round]), loss[i_round],
-                r_squared[i_round],
-                emb_inferred.theta['rho']['value'],
-                emb_inferred.theta['tau']['value'],
-                emb_inferred.theta['beta']['value'],
-                emb_inferred.theta['gamma']['value']
+                r_squared[i_round]
             )
         )
         print('    ============================')
@@ -1261,7 +1050,7 @@ def visualize_exp_1(fp_cv, fp_figure=None):
     ypad = ydiff * .1
     limits_loss = [ymin - ypad, ymax + ypad]
 
-    fig, ax = plt.subplots(figsize=(6.5, 3))
+    _, ax = plt.subplots(figsize=(6.5, 3))
     xg = np.arange(n_model)
 
     # Loss.
@@ -1269,7 +1058,7 @@ def visualize_exp_1(fp_cv, fp_figure=None):
     ax = plt.subplot(1, 2, 1)
     color = rgb1
     error_kw = {'linewidth': 4, 'ecolor': rgb1_light}
-    rects2 = ax.bar(
+    _ = ax.bar(
         xg, test_mu, yerr=test_sem,
         width=width, color='b', error_kw=error_kw
     )
@@ -1289,13 +1078,13 @@ def visualize_exp_1(fp_cv, fp_figure=None):
     ax = plt.subplot(1, 2, 2)
     color = rgb2
     error_kw = {'linewidth': 6, 'ecolor': rgb2_light}
-    rects1 = ax.bar(
+    _ = ax.bar(
         xg - width/2, acc_2c1_mu, yerr=acc_2c1_sem,
         width=width, color=color, error_kw=error_kw, label='Top-1 2-choose-1'
     )
     color = rgb3
     error_kw = {'linewidth': 6, 'ecolor': rgb3_light}
-    rects2 = ax.bar(
+    _ = ax.bar(
         xg + width/2, acc_8c2_mu, yerr=acc_8c2_sem,
         width=width, color=color, error_kw=error_kw, label='Top-5 8-choose-2'
     )
@@ -1315,7 +1104,9 @@ def visualize_exp_1(fp_cv, fp_figure=None):
     if fp_figure is None:
         plt.show()
     else:
-        plt.savefig(os.fspath(fp_figure), format='pdf', bbox_inches="tight", dpi=100)
+        plt.savefig(
+            os.fspath(fp_figure), format='pdf', bbox_inches="tight", dpi=100
+        )
 
 
 def complete_pairwise_ttest(model_list, val, alpha=.05):
@@ -1391,11 +1182,6 @@ def visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure=None):
     rgb1_trans = np.array((0.0, 0.0, 0.5312, alpha_val))
     rgb2_trans = np.array((1.0, 0.8125, 0.0, alpha_val))
     rgb3_trans = np.array((0.5, 0.0, 0.0, alpha_val))
-    # Lighter version.
-    color_scale = .4  # Lower scale yeilds lighter colors.
-    rgb1_light = 1 - (color_scale * (1 - rgb1))
-    rgb2_light = 1 - (color_scale * (1 - rgb2))
-    rgb3_light = 1 - (color_scale * (1 - rgb3))
 
     c_line = [tuple(rgb1), tuple(rgb3), tuple(rgb2)]
     # c_env = [tuple(rgb1_light), tuple(rgb3_light)]
@@ -1412,7 +1198,7 @@ def visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure=None):
         'horizontalalignment': 'center'
     }
 
-    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
+    _, ax = plt.subplots(1, 1, figsize=(6, 4))
 
     i_cond = 2
     plot_exp2_condition(
@@ -1429,82 +1215,6 @@ def visualize_exp_2(data_r2c1, data_r8c2, data_a8c2, fp_figure=None):
     i_cond = 1
     plot_exp2_condition(
         ax, data_a8c2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
-        fontdict, thin_step=5
-    )
-
-    ax.set_ylim(bottom=0., top=1.05)
-    ax.set_xlabel('Total Worker Hours')
-    ax.set_ylabel(r'Pearson $\rho$')
-    ax.legend()
-    plt.tight_layout()
-
-    if fp_figure is None:
-        plt.show()
-    else:
-        plt.savefig(
-            os.fspath(fp_figure), format='pdf', bbox_inches="tight", dpi=100
-        )
-
-
-def visualize_exp_2_plus(data_r2c1, data_r8c2, data_a8c2, data_h8c2, fp_figure=None):
-    """Visualize results of experiment."""
-    # Standard.
-    rgb1 = np.array((0.0, 0.0, 0.5312, 1.0))
-    rgb2 = np.array((1.0, 0.8125, 0.0, 1.0))
-    rgb3 = np.array((0.5, 0.0, 0.0, 1.0))
-    rgb4 = np.array([0. , 0.6, 0.2, 1.0])
-    # Transparent version.
-    alpha_val = .2
-    rgb1_trans = np.array((0.0, 0.0, 0.5312, alpha_val))
-    rgb2_trans = np.array((1.0, 0.8125, 0.0, alpha_val))
-    rgb3_trans = np.array((0.5, 0.0, 0.0, alpha_val))
-    rgb4_trans = np.array([0. , 0.6, 0.2, alpha_val])
-    # Lighter version.
-    color_scale = .4  # Lower scale yeilds lighter colors.
-    rgb1_light = 1 - (color_scale * (1 - rgb1))
-    rgb2_light = 1 - (color_scale * (1 - rgb2))
-    rgb3_light = 1 - (color_scale * (1 - rgb3))
-    rgb4_light = 1 - (color_scale * (1 - rgb4))
-
-    c_line = [tuple(rgb1), tuple(rgb3), tuple(rgb2), tuple(rgb4)]
-    # c_env = [tuple(rgb1_light), tuple(rgb3_light)]
-    c_env = [tuple(rgb1_trans), tuple(rgb3_trans), tuple(rgb2_trans), tuple(rgb4_trans)]
-    c_scatter = [
-        np.expand_dims(rgb1, axis=0),
-        np.expand_dims(rgb3, axis=0),
-        np.expand_dims(rgb2, axis=0),
-        np.expand_dims(rgb4, axis=0)
-    ]
-
-    fontdict = {
-        'fontsize': 10,
-        'verticalalignment': 'top',
-        'horizontalalignment': 'left'
-    }
-
-    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
-
-    i_cond = 2
-    plot_exp2_condition(
-        ax, data_r2c1, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
-        fontdict
-    )
-
-    i_cond = 0
-    plot_exp2_condition(
-        ax, data_r8c2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
-        fontdict
-    )
-
-    i_cond = 1
-    plot_exp2_condition(
-        ax, data_a8c2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
-        fontdict, thin_step=5
-    )
-
-    i_cond = 3
-    plot_exp2_condition(
-        ax, data_h8c2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
         fontdict, thin_step=5
     )
 
@@ -1523,7 +1233,8 @@ def visualize_exp_2_plus(data_r2c1, data_r8c2, data_a8c2, data_h8c2, fp_figure=N
 
 
 def plot_exp2_condition(
-        ax, data, c_line, c_env, c_scatter, fontdict, rsquared_crit=.95, thin_step=1):
+        ax, data, c_line, c_env, c_scatter, fontdict, rsquared_crit=.95,
+        thin_step=1):
     """Plot condition."""
     legend_name = data['info']['name']
     results = data['results']
@@ -1535,7 +1246,6 @@ def plot_exp2_condition(
     results["r_squared"] = results["r_squared"][0::thin_step, :]
 
     time_factor = data['info']['time_s_per_trial'] / (60 * 60)
-    n_run = results['n_trial'].shape[1]
 
     if 'is_valid' in results:
         is_valid = results['is_valid']
@@ -1553,7 +1263,7 @@ def plot_exp2_condition(
 
     xg = np.log10(time_factor * n_trial_avg)
     ax.plot(
-        xg, r_mean_avg, '-', color=c_line,
+        xg, r_mean_avg, '-', linewidth=1, color=c_line,
         label='{0:s}'.format(legend_name)
     )
     ax.fill_between(
@@ -1581,8 +1291,8 @@ def plot_exp2_condition(
         trial_thresh = trial_thresh + n_trial_avg[before_idx]
 
         ax.scatter(
-            np.log10(time_factor * trial_thresh), r2_thresh, marker='d', color=c_scatter,
-            edgecolors='k'
+            np.log10(time_factor * trial_thresh), r2_thresh, marker='d',
+            color=c_scatter, edgecolors='k'
         )
         ax.text(
             np.log10(time_factor * trial_thresh), r2_thresh + .04,
@@ -1592,7 +1302,9 @@ def plot_exp2_condition(
     ax.set_xticks([-1, 0, 1, 2])
     ax.set_xticklabels([".1", "1", "10", "100"])
     # Minor ticks.
-    lg = np.hstack((np.arange(.1, 1, .1), np.arange(1, 10, 1), np.arange(10, 100, 10)))
+    lg = np.hstack(
+        (np.arange(.1, 1, .1), np.arange(1, 10, 1), np.arange(10, 100, 10))
+    )
     ax.set_xticks(np.log10(lg), minor=True)
 
 
@@ -1610,7 +1322,6 @@ def visualize_exp_3(data_r8c2_g1, data_r8c2_g2, fp_figure=None):
     # Lighter version.
     color_scale = .4  # Lower scale yeilds lighter colors.
     rgb1_light = 1 - (color_scale * (1 - rgb1))
-    rgb2_light = 1 - (color_scale * (1 - rgb2))
     rgb3_light = 1 - (color_scale * (1 - rgb3))
 
     fontdict_bold = {
@@ -1641,17 +1352,17 @@ def visualize_exp_3(data_r8c2_g1, data_r8c2_g2, fp_figure=None):
         'horizontalalignment': 'left'
     }
 
-    fig, ax = plt.subplots(1, 2, figsize=(6, 4))
+    _, ax = plt.subplots(1, 2, figsize=(6, 4))
 
     ax = plt.subplot(1, 2, 2)
     i_cond = 0
-    (time_thresh_ind, r2_thresh_ind) = plot_exp3_condition(
+    (time_thresh_ind, _) = plot_exp3_condition(
         ax, data_r8c2_g1, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
         fontdict, 'Independent'
     )
 
     i_cond = 1
-    (time_thresh_shared, r2_thresh_shared) = plot_exp3_condition(
+    (time_thresh_shared, _) = plot_exp3_condition(
         ax, data_r8c2_g2, c_line[i_cond], c_env[i_cond], c_scatter[i_cond],
         fontdict, 'Shared'
     )
@@ -1671,18 +1382,17 @@ def visualize_exp_3(data_r8c2_g1, data_r8c2_g2, fp_figure=None):
 
     # Total worker hours.
     ax = plt.subplot(1, 2, 1)
-    xg = np.array([0, 1])
     yg_nov = np.array([time_thresh_ind, (3550 * 8.98) / (60 * 60)])
-    # yg_nov = np.array([time_thresh_ind, time_thresh_ind])
     yg_exp = np.array([time_thresh_ind, time_thresh_shared])
-    # ax.bar(xg, yg_nov, color=rgb2, label="Novice")
-    # ax.bar(0, yg_exp[0], bottom=yg_nov[0], color=rgb1, label="Independent Expert")
-    # ax.bar(1, yg_exp[1], bottom=yg_nov[1], color=rgb3, label="Shared Expert")
 
     ax.bar(0, yg_nov[0], color=rgb1_light, label="Independent Novice")
     ax.bar(1, yg_nov[1], color=rgb3_light, label="Shared Novice")
-    ax.bar(0, yg_exp[0], bottom=yg_nov[0], color=rgb1, label="Independent Expert")
-    ax.bar(1, yg_exp[1], bottom=yg_nov[1], color=rgb3, label="Shared Expert")
+    ax.bar(
+        0, yg_exp[0], bottom=yg_nov[0], color=rgb1, label="Independent Expert"
+    )
+    ax.bar(
+        1, yg_exp[1], bottom=yg_nov[1], color=rgb3, label="Shared Expert"
+    )
 
     ax.set_ylabel('Total Worker Hours')
     ax.set_xticks([0, 1])
@@ -1723,7 +1433,6 @@ def plot_exp3_condition(
 
     time_s_8c2 = 8.98
     time_factor = time_s_8c2 / (60 * 60)
-    n_run = results['n_trial'].shape[1]
 
     if 'is_valid' in results:
         is_valid = results['is_valid']
@@ -1774,7 +1483,9 @@ def plot_exp3_condition(
             time_thresh, r2_thresh, marker='d', color=c_scatter,
             edgecolors='k')
         ax.text(
-            time_thresh, r2_thresh + .06, "{0:.1f}".format(time_factor * trial_thresh),
+            time_thresh, r2_thresh + .06, "{0:.1f}".format(
+                time_factor * trial_thresh
+            ),
             fontdict=fontdict)
         return (time_thresh, r2_thresh)
 
@@ -1783,6 +1494,5 @@ if __name__ == "__main__":
     # Specify the path to a folder where you would like to store all your
     # results by change the following line. For example,
     # fp_results = Path('/home/results').
-    # fp_results = Path('/home/brett/projects/psiz-app/results')
     fp_results = Path('/Users/bdroads/Projects/psiz-app/results')
     main(fp_results)

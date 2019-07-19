@@ -292,7 +292,6 @@ def run_sim_1(domain, fp_pre_domain, fp_sim_1_domain):
         'n_trial_total': 10050,
         'n_trial_per_round': 40,
         'time_s_per_trial': time_s_8c2,
-        'n_query': 40,
         'n_redundant': 1
     }
 
@@ -743,8 +742,7 @@ def simulate_run_active(
 
         time_start = time.time()
         active_docket, _ = active_gen.generate(
-            cond_info['n_trial_per_round'], emb_inferred, samples,
-            n_query=cond_info['n_query']
+            cond_info['n_trial_per_round'], emb_inferred, samples
         )
         elapsed = time.time() - time_start
         print('Active | Elapsed time: {0:.2f} m'.format(elapsed / 60))

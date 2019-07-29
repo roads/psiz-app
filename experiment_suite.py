@@ -119,11 +119,7 @@ def run_prelim_a(domain, fp_pre_domain):
     fp_emb_true = fp_pre_domain / Path('emb_true.hdf5')
 
     # Load the real observations.
-    if domain == 'birds':
-        dataset_name = 'birds-16'
-    elif domain == 'rocks':
-        dataset_name = 'rocks_Nosofsky_etal_2016'
-    (obs, catalog) = datasets.load_dataset(dataset_name, is_hosted=True)
+    (obs, catalog) = datasets.load_dataset('birds-16')
 
     np.random.seed(123)
     # Infer 2D solution for visualization purposes.
@@ -164,11 +160,7 @@ def run_prelim_b(domain, fp_pre_domain):
     fp_fig_probe = fp_pre_domain / Path('probe.pdf')
 
     # Load the real observations.
-    if domain == 'birds':
-        dataset_name = 'birds-16'
-    elif domain == 'rocks':
-        dataset_name = 'rocks_Nosofsky_etal_2016'
-    (obs, catalog) = datasets.load_dataset(dataset_name, is_hosted=True)
+    (obs, catalog) = datasets.load_dataset('birds-16')
 
     converge_data = assess_convergence(
         obs, Exponential, catalog.n_stimuli, 3, n_partition=10, n_back=3,
@@ -185,11 +177,7 @@ def run_exp_1(domain, fp_pre_domain, fp_exp_1_domain):
     n_fold = 10
 
     # Load the real observations.
-    if domain == 'birds':
-        dataset_name = 'birds-16'
-    elif domain == 'rocks':
-        dataset_name = 'rocks_Nosofsky_etal_2016'
-    (obs, catalog) = datasets.load_dataset(dataset_name, is_hosted=True)
+    (obs, catalog) = datasets.load_dataset('birds-16')
 
     # Instantiate the balanced k-fold cross-validation object.
     np.random.seed(seed=4352)
@@ -455,7 +443,7 @@ def evaluate_fold(
     # Instantiate model.
     emb = embedding_constructor(n_stimuli, n_dim, n_group)
     if len(freeze_options) > 0:
-        emb.freeze(freeze_options=freeze_options)
+        emb.freeze(freeze_options)
     # Fit model using training data.
     loss_train, _ = emb.fit(obs_train, n_restart=n_restart_fit)
 
@@ -824,14 +812,10 @@ def exp_3_ground_truth(n_stimuli, n_dim, n_group):
             'gamma': 0.001
         },
         'phi': {
-            'phi_1': attention
+            'w': attention
         }
     }
     emb.freeze(freeze_options)
-    # sim_mat = similarity_matrix(emb.similarity, z)
-    # idx_upper = np.triu_indices(n_stimuli, 1)
-    # plt.hist(sim_mat[idx_upper])
-    # plt.show()
     return emb
 
 

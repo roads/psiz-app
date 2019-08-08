@@ -164,7 +164,7 @@ def run_prelim_b(domain, fp_pre_domain):
 
     converge_data = assess_convergence(
         obs, Exponential, catalog.n_stimuli, 3, n_partition=10, n_back=3,
-        n_restart=50, verbose=2
+        n_restart=50, score='pearson', verbose=2
     )
     pickle.dump(converge_data, open(fp_probe, "wb"))
     # converge_data = pickle.load(open(fp_probe, 'rb'))
@@ -1476,5 +1476,5 @@ if __name__ == "__main__":
     # Specify the path to a folder where you would like to store all your
     # results by change the following line. For example,
     # fp_results = Path('/home/results').
-    fp_results = Path('/Users/bdroads/Projects/psiz-app/results')
+    fp_results = Path('/Users/bdroads/Projects/psiz-brm/results')
     main(fp_results)

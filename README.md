@@ -1,4 +1,4 @@
-# psiz-app
+# psiz-brm
 ## Obtaining psychological embeddings through joint kernel and metric learning
 
 This repository can be used to reproduce the results in Roads & Mozer (in press).

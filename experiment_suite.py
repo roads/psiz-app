@@ -2,9 +2,9 @@
 
 This script carries out the experiments described in:
 
-Roads, B.D. & Mozer, M. C. (2019). Obtaining psychological embeddings
-    through joint kernel and metric learning. Behavior Research Methods.
-    doi: 10.3758/s13428-019-01275-5
+Roads, B. D., & Mozer, M. C. (2019). Obtaining psychological embeddings
+    through joint kernel and metric learning. Behavior Research
+    Methods. 51(5), 2180-2193. doi:10.3758/s13428-019-01285-3
 
 Since this experiment is computationally intensive and time-consuming,
 intermediate results are saved to disk and loaded as needed.
@@ -77,18 +77,18 @@ def main(fp_results):
     fp_sim_1_domain = fp_results / Path('sim_1/{0:s}'.format(domain))
     fp_sim_2 = fp_results / Path('sim_2')
 
-    # Run preliminaries.
-    run_prelim_a(domain, fp_pre_domain)
-    run_prelim_b(domain, fp_pre_domain)
+    # # Run preliminaries.
+    # run_prelim_a(domain, fp_pre_domain)
+    # run_prelim_b(domain, fp_pre_domain)
 
-    # Run each experiment/simulation.
-    run_exp_1(domain, fp_pre_domain, fp_exp_1_domain)
-    run_sim_1(domain, fp_pre_domain, fp_sim_1_domain)
-    run_sim_2(domain, fp_sim_2)
+    # # Run each experiment/simulation.
+    # run_exp_1(domain, fp_pre_domain, fp_exp_1_domain)
+    # run_sim_1(domain, fp_pre_domain, fp_sim_1_domain)
+    # run_sim_2(domain, fp_sim_2)
 
-    # Visualize Experiment 1.
-    fp_fig_exp_1 = fp_exp_1_domain / Path('exp_1.pdf')
-    visualize_exp_1(fp_exp_1_domain, fp_fig_exp_1)
+    # # Visualize Experiment 1.
+    # fp_fig_exp_1 = fp_exp_1_domain / Path('exp_1.pdf')
+    # visualize_exp_1(fp_exp_1_domain, fp_fig_exp_1)
 
     # Visualize Simulation 1.
     fp_fig_sim_1 = fp_sim_1_domain / Path('sim_1.pdf')

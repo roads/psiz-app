@@ -1476,5 +1476,5 @@ if __name__ == "__main__":
     # Specify the path to a folder where you would like to store all your
     # results by change the following line. For example,
     # fp_results = Path('/home/results').
-    fp_project = Path.home() / Path('projects/psiz-projects/psiz-brm/results')
+    fp_results = Path.home() / Path('projects/psiz-projects/psiz-brm/results')
     main(fp_results)
